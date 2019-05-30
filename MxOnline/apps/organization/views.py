@@ -7,6 +7,7 @@ from django.views.generic.base import View
 from .models import CityDict,CourseOrg
 from .forms import UserAskForm
 from django.http import HttpResponse
+from operation.models import UserFavorite
 
 class OrgView(View):
     '''课程机构'''
@@ -140,8 +141,32 @@ class OrgTeacherView(View):
         })
 
 
+class AddFavView(View):
+    """
+    用户收藏和取消收藏
+    """
+    def post(self, request):
+        id = request.POST.get('fav_id', 0)         # 防止后边int(fav_id)时出错
+        type = request.POST.get('fav_type', 0)     # 防止int(fav_type)出错
 
+        if not request.user.is_authenticated:
+            # 未登录时返回json提示未登录，跳转到登录页面是在ajax中做的
+            return HttpResponse('{"status":"fail", "msg":"用户未登录"}', content_type='application/json')
 
-
+        exist_record = UserFavorite.objects.filter(user=request.user, fav_id=int(id), fav_type=int(type))
+        if exist_record:
+            # 如果记录已经存在，表示用户取消收藏
+            exist_record.delete()
+            return HttpResponse('{"status":"success", "msg":"收藏"}', content_type='application/json')
+        else:
+            user_fav = UserFavorite()
+            if int(id) > 0 and int(type) > 0:
+                user_fav.user = request.user
+                user_fav.fav_id = int(id)
+                user_fav.fav_type = int(type)
+                user_fav.save()
+                return HttpResponse('{"status":"success", "msg":"已收藏"}', content_type='application/json')
+            else:
+                return HttpResponse('{"status":"fail", "msg":"收藏出错"}', content_type='application/json')
 
 

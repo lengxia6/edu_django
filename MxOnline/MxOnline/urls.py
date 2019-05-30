@@ -19,7 +19,7 @@ from extra_apps import xadmin
 from django.views.generic import RedirectView,TemplateView
 # from users import views
 from users.views import LoginView,RegisterView,ActiveUserView,ForgetPwdView,ResetView,ModifyPwdView
-from organization.views import OrgView
+from organization.views import OrgView,OrgView_test
 from django.views.static import serve
 from MxOnline.settings import MEDIA_ROOT
 
@@ -35,10 +35,11 @@ urlpatterns = [
     path('forget/',ForgetPwdView.as_view(),name='forget_pwd'),
     re_path('reset/(?P<active_code>.*)/', ResetView.as_view(), name='reset_pwd'),
     path('modify_pwd/',ModifyPwdView.as_view(),name='modify_pwd'),
-    path('org_list/',OrgView.as_view(),name='org_list'),
+    # path('org_list/',OrgView.as_view(),name='org_list'),
     path("org/",include('organization.urls',namespace="org")),
     # 处理图片显示的url,使用Django自带serve,传入参数告诉它去哪个路径找，我们有配置好的路径MEDIAROOT
     re_path(r'^media/(?P<path>.*)', serve, {"document_root": MEDIA_ROOT }),
+
 
 
 
