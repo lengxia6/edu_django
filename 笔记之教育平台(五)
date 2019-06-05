@@ -1,0 +1,32 @@
+# Django+xadmin打造在线教育平台（五）
+
+八、课程详情页功能的实现
+    8.1、课程列表
+        （1）配置urls
+
+        MxOnline/urls中
+
+        path("course/", include('course.urls', namespace="course")),
+
+
+        course里面新建urls.py
+        # course/urls.py
+
+        from django.urls import path,re_path
+        from .views import CourseListView
+
+        # 要写上app的名字
+        app_name = "course"
+
+        urlpatterns = [
+            path('list/',CourseListView.as_view(),name='course_list'),
+
+        ]
+
+
+2019/6/5已完成：
+8.1、课程列表功能
+8.2、分页功能
+8.3、排序功能
+8.4、课程详情功能
+8.5、授课机构功能
