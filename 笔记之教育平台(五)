@@ -22,6 +22,739 @@
             path('list/',CourseListView.as_view(),name='course_list'),
 
         ]
+        把course-list.html拷贝到templates目录下
+
+
+        from django.shortcuts import render
+        from django.views.generic import View
+
+        class CourseListView(View):
+            def get(self, request):
+                return render(request, "course-list.html")
+
+
+        （2）course-list.html继承base.html
+
+        修改title，修改bread里面，content里面放course-list独有的
+        {#templates/course-list.html#}
+
+        {% extends 'base.html' %}
+        {% load staticfiles %}
+        {% block title %}公开课列表{% endblock %}
+
+        {% block custom_bread %}
+            <section>
+                <div class="wp">
+                    <ul class="crumbs">
+                        <li><a href="index.html">首页</a>></li>
+                        <li>公开课</li>
+                    </ul>
+                </div>
+            </section>
+        {% endblock %}
+        {% block content %}
+        <section>
+            <div class="wp">
+                <div class="list" style="margin-top:0;">
+                    <div class="left layout">
+                        <div class="head">
+                            <ul class="tab_header">
+                                <li class="active"><a href="?sort=">最新 </a></li>
+                                <li ><a href="?sort=hot">最热门</a></li>
+                                <li ><a href="?sort=students">参与人数</a></li>
+                            </ul>
+                        </div>
+                        <div id="inWindow">
+                            <div class="tab_cont " id="content">
+                            <div class="group_list">
+
+                                    <div class="box">
+                                        <a href="course-detail.html">
+                                            <img width="280" height="350" class="scrollLoading" src="{% static 'media/courses/2016/12/mysql.jpg' %}"/>
+                                        </a>
+                                        <div class="des">
+                                            <a href="course-detail.html">
+                                                <h2>xadmin进阶开发</h2>
+                                            </a>
+                                            <span class="fl">时长：<i class="key">30</i></span>
+                                            <span class="fr">学习人数：2&nbsp;&nbsp;</span>
+                                        </div>
+                                        <div class="bottom">
+                                            <a href="course-detail.html"><span class="fl">来自慕课网</span></a>
+                                            <span class="star fr  notlogin
+                                                " data-favid="15">
+                                                1
+                                            </span>
+                                        </div>
+                                    </div>
+
+                            </div>
+                            <div class="pageturn">
+                                <ul class="pagelist">
+
+                                                <li class="active"><a href="?page=1">1</a></li>
+
+
+                                                <li><a href="?page=2" class="page">2</a></li>
+
+                                        <li class="long"><a href="?page=2">下一页</a></li>
+
+
+                                </ul>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                    <div class="right layout">
+                        <div class="head">热门课程推荐</div>
+                        <div class="group_recommend">
+
+                            <dl>
+                                <dt>
+                                    <a target="_blank" href="">
+                                        <img width="240" height="220" class="scrollLoading" src="{% static 'media/courses/2016/11/540e57300001d6d906000338-240-135_n0L8vbw.jpg' %}"/>
+                                    </a>
+                                </dt>
+                                <dd>
+                                    <a target="_blank" href=""><h2> django与vuejs实战项目2</h2></a>
+                                    <span class="fl">难度：<i class="key">高级</i></span>
+                                </dd>
+                            </dl>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        {% endblock %}
+
+        然后去后台添加十门课程
+
+        （3）列表展示
+
+        views.py
+
+
+        # course/views.py
+
+        from django.shortcuts import render
+        from django.views.generic import View
+        from .models import Course
+
+        class CourseListView(View):
+            def get(self, request):
+                all_courses = Course.objects.all()
+
+                return render(request, "course-list.html",{'all_courses':all_courses})
+
+        course-list.html
+
+         <div class="group_list">
+            {% for course in all_course %}
+            <div class="box">
+                <a href="course-detail.html">
+                    <img width="280" height="350" class="scrollLoading" src="{{ MEDIA_URL }}{{ course.image }}"/>
+                </a>
+                <div class="des">
+                    <a href="course-detail.html">
+                        <h2>{{ course.name }}</h2>
+                    </a>
+                    <span class="fl">时长：<i class="key">{{ course.learn_times }}</i></span>
+                    <span class="fr">学习人数：{{ course.students }}&nbsp;&nbsp;</span>
+                </div>
+                <div class="bottom">
+                    <a href="course-detail.html"><span class="fl">来自{{ course.course_org.name }}</span></a>
+                    <span class="star fr  notlogin
+                        " data-favid="15">
+                        {{ course.fav_nums }}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+
+
+    8.2.分页
+
+            try:
+                page = request.GET.get('page', 1)
+            except PageNotAnInteger:
+                page = 1
+            p = Paginator(all_courses,2 , request=request)
+            courses = p.page(page)
+
+    <div class="pageturn">
+                            <ul class="pagelist">
+                                {% if all_courses.has_previous %}
+                                    <li class="long"><a href="?{{ all_courses.previous_page_number.querystring }}">上一页</a></li>
+                                {% endif %}
+
+                                {% for page in all_courses.pages %}
+                                    {% if page %}
+                                        {% ifequal page all_courses.number %}
+                                            <li class="active"><a href="?{{ page.querystring }}">{{ page }}</a></li>
+                                        {% else %}
+                                            <li><a href="?{{ page.querystring }}" class="page">{{ page }}</a></li>
+                                        {% endifequal %}
+                                    {% else %}
+                                        <li class="none"><a href="">...</a></li>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if all_courses.has_next %}
+                                    <li class="long"><a href="?{{ all_courses.next_page_number.querystring }}">下一页</a></li>
+                                {% endif %}
+                            </ul>
+                    </div>
+
+
+    8.3.排序
+
+    class CourseListView(View):
+        def get(self, request):
+            all_courses = Course.objects.all().order_by('-add_time')
+            # 热门课程推荐
+            hot_courses = Course.objects.all().order_by('-click_nums')[:3]
+            # 排序
+            sort = request.GET.get('sort', "")
+            if sort:
+                if sort == "students":
+                    all_courses = all_courses.order_by("-students")
+                elif sort == "hot":
+                    all_courses = all_courses.order_by("-click_nums")
+            # 分页
+            try:
+                page = request.GET.get('page', 1)
+            except PageNotAnInteger:
+                page = 1
+            p = Paginator(all_courses,2 , request=request)
+            courses = p.page(page)
+            return render(request, "course-list.html", {
+                "all_courses":courses,
+                'sort': sort,
+                'hot_courses':hot_courses,
+
+            })
+
+    <div class="head">
+                        <ul class="tab_header">
+                            <li class="{% ifequal sort '' %}active{% endifequal %}"><a href="?sort=" >最新 </a></li>
+                            <li class="{% ifequal sort 'hot' %}active{% endifequal %}"><a href="?sort=hot" >最热门 </a></li>
+                            <li class="{% ifequal sort 'students' %}active{% endifequal %}"><a href="?sort=students" >参与人数 </a></li>
+                        </ul>
+                    </div>
+
+
+
+    <div class="head">热门课程推荐</div>
+                    <div class="group_recommend">
+                        {% for hot_course in hot_courses %}
+                        <dl>
+                            <dt>
+                                <a target="_blank" href="">
+                                    <img width="240" height="220" class="scrollLoading" src="{{ MEDIA_URL }}{{ hot_course.image }}"/>
+                                </a>
+                            </dt>
+                            <dd>
+                                <a target="_blank" href=""><h2> {{ hot_course.name }}</h2></a>
+                                <span class="fl">难度：<i class="key">{{ hot_course.get_degree_display }}</i></span>
+                            </dd>
+                        </dl>
+                        {% endfor %}
+
+        {#templates/course-list.html#}
+
+        {% extends 'base.html' %}
+        {% load staticfiles %}
+        {% block title %}公开课列表{% endblock %}
+
+        {% block custom_bread %}
+            <section>
+                <div class="wp">
+                    <ul class="crumbs">
+                        <li><a href="index.html">首页</a>></li>
+                        <li>公开课</li>
+                    </ul>
+                </div>
+            </section>
+        {% endblock %}
+        {% block content %}
+        <section>
+            <div class="wp">
+                <div class="list" style="margin-top:0;">
+                    <div class="left layout">
+                        <div class="head">
+                            <ul class="tab_header">
+                                <li class="{% ifequal sort '' %}active{% endifequal %}"><a href="?sort=" >最新 </a></li>
+                                <li class="{% ifequal sort 'hot' %}active{% endifequal %}"><a href="?sort=hot" >最热门 </a></li>
+                                <li class="{% ifequal sort 'students' %}active{% endifequal %}"><a href="?sort=students" >参与人数 </a></li>
+                            </ul>
+                        </div>
+                        <div id="inWindow">
+                            <div class="tab_cont " id="content">
+                            <div class="group_list">
+                                    {% for course in all_courses.object_list %}
+                                    <div class="box">
+                                        <a href="course-detail.html">
+                                            <img width="280" height="350" class="scrollLoading" src="{{ MEDIA_URL }}{{ course.image }}"/>
+                                        </a>
+                                        <div class="des">
+                                            <a href="course-detail.html">
+                                                <h2>{{ course.name }}</h2>
+                                            </a>
+                                            <span class="fl">时长：<i class="key">{{ course.learn_times }}</i></span>
+                                            <span class="fr">学习人数：{{ course.students }}&nbsp;&nbsp;</span>
+                                        </div>
+                                        <div class="bottom">
+                                            <a href="course-detail.html"><span class="fl">来自{{ course.course_org.name }}</span></a>
+                                            <span class="star fr  notlogin
+                                                " data-favid="15">
+                                                {{ course.fav_nums }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                            </div>
+                            <div class="pageturn">
+                                <ul class="pagelist">
+                                    {% if all_courses.has_previous %}
+                                        <li class="long"><a href="?{{ all_courses.previous_page_number.querystring }}">上一页</a></li>
+                                    {% endif %}
+
+                                    {% for page in all_courses.pages %}
+                                        {% if page %}
+                                            {% ifequal page all_courses.number %}
+                                                <li class="active"><a href="?{{ page.querystring }}">{{ page }}</a></li>
+                                            {% else %}
+                                                <li><a href="?{{ page.querystring }}" class="page">{{ page }}</a></li>
+                                            {% endifequal %}
+                                        {% else %}
+                                            <li class="none"><a href="">...</a></li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% if all_courses.has_next %}
+                                        <li class="long"><a href="?{{ all_courses.next_page_number.querystring }}">下一页</a></li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                    <div class="right layout">
+                        <div class="head">热门课程推荐</div>
+                        <div class="group_recommend">
+                            {% for hot_course in hot_courses %}
+                            <dl>
+                                <dt>
+                                    <a target="_blank" href="">
+                                        <img width="240" height="220" class="scrollLoading" src="{{ MEDIA_URL }}{{ hot_course.image }}"/>
+                                    </a>
+                                </dt>
+                                <dd>
+                                    <a target="_blank" href=""><h2> {{ hot_course.name }}</h2></a>
+                                    <span class="fl">难度：<i class="key">{{ hot_course.get_degree_display }}</i></span>
+                                </dd>
+                            </dl>
+                            {% endfor %}
+
+
+
+
+
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        {% endblock %}
+
+        course-list.html
+        复制代码
+
+        复制代码
+        # course/views.py
+
+        from django.shortcuts import render
+        from django.views.generic import View
+        from .models import Course
+        from pure_pagination import Paginator, EmptyPage, PageNotAnInteger
+
+        class CourseListView(View):
+            def get(self, request):
+                all_courses = Course.objects.all().order_by('-add_time')
+                # 热门课程推荐
+                hot_courses = Course.objects.all().order_by('-click_nums')[:3]
+                # 排序
+                sort = request.GET.get('sort', "")
+                if sort:
+                    if sort == "students":
+                        all_courses = all_courses.order_by("-students")
+                    elif sort == "hot":
+                        all_courses = all_courses.order_by("-click_nums")
+                # 分页
+                try:
+                    page = request.GET.get('page', 1)
+                except PageNotAnInteger:
+                    page = 1
+                p = Paginator(all_courses,2 , request=request)
+                courses = p.page(page)
+                return render(request, "course-list.html", {
+                    "all_courses":courses,
+                    'sort': sort,
+                    'hot_courses':hot_courses,
+
+                })
+
+    8.4.课程详情
+    course-detail.html复制进来
+
+    （1）url配置
+
+    re_path('course/(?P<course_id>\d+)/', CourseDetailView.as_view(), name="course_detail"),
+
+
+    class CourseDetailView(View):
+        '''课程详情'''
+        def get(self, request, course_id):
+            return  render(request, "course-detail.html", {
+
+            })
+
+
+     在course-list.html中添加链接到详情
+
+     （2）views
+
+
+    class CourseDetailView(View):
+        '''课程详情'''
+        def get(self, request, course_id):
+            course = Course.objects.get(id=int(course_id))
+            # 课程的点击数加1
+            course.click_nums += 1
+            course.save()
+            return  render(request, "course-detail.html", {
+                'course':course,
+
+            })
+
+    （3）Course model增加
+
+    一个category字段
+    一个获取章节数的方法
+    一个获取这么课程的学习用户方法
+
+    class Course(models.Model):
+    DEGREE_CHOICES = (
+        ("cj", "初级"),
+        ("zj", "中级"),
+        ("gj", "高级")
+    )
+    name = models.CharField("课程名",max_length=50)
+    desc = models.CharField("课程描述",max_length=300)
+    detail = models.TextField("课程详情")
+    degree = models.CharField('难度',choices=DEGREE_CHOICES, max_length=2)
+    learn_times = models.IntegerField("学习时长(分钟数)",default=0)
+    students = models.IntegerField("学习人数",default=0)
+    fav_nums = models.IntegerField("收藏人数",default=0)
+    image = models.ImageField("封面图",upload_to="courses/%Y/%m",max_length=100)
+    click_nums = models.IntegerField("点击数",default=0)
+    add_time = models.DateTimeField("添加时间",default=datetime.now,)
+    course_org = models.ForeignKey(CourseOrg, on_delete=models.CASCADE, verbose_name="所属机构", null=True, blank=True)
+    category = models.CharField("课程类别",max_length=20, default="")
+
+    class Meta:
+        verbose_name = "课程"
+        verbose_name_plural = verbose_name
+
+    def get_zj_nums(self):
+        #获取课程的章节数
+        return self.lesson_set.all().count()
+
+    def get_learn_users(self):
+        #获取这门课程的学习用户
+        return self.usercourse_set.all()[:5]
+
+    def __str__(self):
+        return self.name
+
+
+    （4）course-detail.html中课程详情信息显示
+
+
+    <div class="picbox">
+                            <div class="tb-booth tb-pic">
+                                <img width="440" height="445" src="{{ MEDIA_URL }}{{ course.image }}" class="jqzoom" />
+                            </div>
+
+                        </div>
+                        <div class="des">
+                            <h1 title="{{ course.name }}">{{ course.name }}</h1>
+                            <span class="key">{{ course.desc }}</span>
+                            <div class="prize">
+                                <span class="fl">难度：<i class="key">{{ course.get_degree_display }}</i></span>
+                                <span class="fr">学习人数：{{ course.students }}</span>
+                            </div>
+                            <ul class="parameter">
+                                <li><span class="pram word3">时&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;长：</span><span>{{ course.learn_times }}</span></li>
+                                <li><span class="pram word3">章&nbsp;节&nbsp;数：</span><span>{{ course.get_zj_nums }}</span></li>
+                                <li><span class="pram word3">课程类别：</span><span title="">{{ course.category }}</span></li>
+                                <li class="piclist"><span class="pram word4">学习用户：</span>
+                                    {% for user_course in course.get_learn_users %}
+                                        <span class="pic"><img width="40" height="40" src="{{ MEDIA_URL }}{{ user_course.user.image }}"/></span>
+                                    {% endfor %}
+                                </li>
+                            </ul>
+                            <div class="btns">
+
+
+    显示课程详情
+    <div class="tab_cont tab_cont1">
+        {{ course.detail }}
+    </div>
+
+
+    8.5.授课机构
+     （1）CourseOrg model添加一个获取教师数的方法
+
+        def get_teacher_nums(self):
+            #获取机构的教师数
+            return self.teacher_set.all().count()
+
+
+    class CourseOrg(models.Model):
+        ORG_CHOICES = (
+            ("pxjg", u"培训机构"),
+            ("gx", u"高校"),
+            ("gr", u"个人"),
+        )
+        name = models.CharField('机构名称',max_length=50)
+        desc = models.TextField('机构描述')
+        category = models.CharField(max_length=20, choices=ORG_CHOICES, verbose_name=u"机构类别", default="pxjg")
+        click_nums = models.IntegerField('点击数',default=0)
+        fav_nums = models.IntegerField('收藏数',default=0)
+        students = models.IntegerField("学习人数",default=0)
+        course_nums = models.IntegerField("课程数",default=0)
+        image = models.ImageField('logo',upload_to='org/%Y/%m',max_length=100)
+        address = models.CharField('机构地址',max_length=150,)
+        city = models.ForeignKey(CityDict,verbose_name='所在城市',on_delete=models.CASCADE)
+        add_time = models.DateTimeField(default=datetime.now)
+
+        class Meta:
+            verbose_name = '课程机构'
+            verbose_name_plural = verbose_name
+
+        def get_teacher_nums(self):
+            #获取机构的教师数
+            return self.teacher_set.all().count()
+
+        def __str__(self):
+            return self.name
+
+    （2）授课机构显示
+
+
+    <div class="head">
+                            <h1>授课机构</h1>
+                            <p>世界名校，课程权威</p>
+                        </div>
+                        <div class="pic">
+                            <a href="/company/14/">
+                                <img width="150" height="80" src="{{ MEDIA_URL }}{{ course.course_org.image }}"/>
+                            </a>
+                        </div>
+                        <a href="/company/14/">
+                            <h2 class="center" title="清华大学">{{ course.course_org.name }}</h2>
+                        </a>
+                        <div class="btn  notlogin
+                             "data-favid="14" id="jsRightBtn">
+                             已收藏
+                        </div>
+                        <div class="clear">
+                            <ul>
+                                <li>
+                                    <span>课 &nbsp;程&nbsp; 数：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   {{ course.course_org.course_nums }}</span>
+                                </li>
+                                <li>
+                                    <span>教 &nbsp;师&nbsp; 数：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  {{ course.course_org.get_teacher_nums }}</span>
+                                </li>
+                                <li>所在地区：&nbsp;&nbsp;{{ course.course_org.address }}</li>
+                                <li>认&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;证&nbsp;:
+                                    &nbsp;&nbsp;
+                                        <img title="金牌机构", src="{% static 'images/gold.png' %}"/>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+
+    8.6.相关课程推荐
+    （1）给“Course” model添加一个“课程标签”字段
+
+    tag = models.CharField('课程标签',default='',max_length=10)
+
+    class Course(models.Model):
+        DEGREE_CHOICES = (
+            ("cj", "初级"),
+            ("zj", "中级"),
+            ("gj", "高级")
+        )
+        name = models.CharField("课程名",max_length=50)
+        desc = models.CharField("课程描述",max_length=300)
+        detail = models.TextField("课程详情")
+        degree = models.CharField('难度',choices=DEGREE_CHOICES, max_length=2)
+        learn_times = models.IntegerField("学习时长(分钟数)",default=0)
+        students = models.IntegerField("学习人数",default=0)
+        fav_nums = models.IntegerField("收藏人数",default=0)
+        image = models.ImageField("封面图",upload_to="courses/%Y/%m",max_length=100)
+        click_nums = models.IntegerField("点击数",default=0)
+        tag = models.CharField('课程标签',default='',max_length=10)
+        add_time = models.DateTimeField("添加时间",default=datetime.now,)
+        course_org = models.ForeignKey(CourseOrg, on_delete=models.CASCADE, verbose_name="所属机构", null=True, blank=True)
+        category = models.CharField("课程类别",max_length=20, default="")
+
+        class Meta:
+            verbose_name = "课程"
+            verbose_name_plural = verbose_name
+
+        def get_zj_nums(self):
+            #获取课程的章节数
+            return self.lesson_set.all().count()
+
+        def get_learn_users(self):
+            #获取这门课程的学习用户
+            return self.usercourse_set.all()[:5]
+
+        def __str__(self):
+            return self.name
+
+     （2）views
+
+
+    class CourseDetailView(View):
+        '''课程详情'''
+        def get(self, request, course_id):
+            course = Course.objects.get(id=int(course_id))
+            # 课程的点击数加1
+            course.click_nums += 1
+            course.save()
+            # 课程标签
+            # 通过当前标签，查找数据库中的课程
+            tag = course.tag
+            if tag:
+                # 需要从1开始不然会推荐自己
+                relate_courses = Course.objects.filter(tag=tag)[:3]
+            else:
+                relate_courses = []
+            return  render(request, "course-detail.html", {
+                'course':course,
+                'relate_courses':relate_courses,
+            })
+
+
+    （3）前端
+
+    <div class="right layout">
+
+                    <div class="head">相关课程推荐</div>
+                    <div class="group_recommend">
+                            {% for relate_course in relate_courses %}
+                            <dl>
+                                <dt>
+                                    <a target="_blank" href="">
+                                        <img width="240" height="220" class="scrollLoading" src="{{ MEDIA_URL }}{{ relate_course.image }}"/>
+                                    </a>
+                                </dt>
+                                <dd>
+                                    <a target="_blank" href=""><h2> {{ relate_course.name }}</h2></a>
+                                    <span class="fl">学习时长：<i class="key">{{ relate_course.learn_times }}</i></span>
+                                </dd>
+                            </dl>
+                            {% endfor %}
+                    </div>
+                </div>
+
+!!!!!!!!!!!!!!! 8.7问题未解决 !!!!!!!!!!!!!!!!!!
+
+    8.7.课程收藏和机构收藏
+      {% block custom_js %}{% endblock %}，放到最下面的位置，因为是js代码，要最后加载
+
+    后端判断当前收藏转态
+
+    复制代码
+    class CourseDetailView(View):
+        '''课程详情'''
+        def get(self, request, course_id):
+            course = Course.objects.get(id=int(course_id))
+            # 课程的点击数加1
+            course.click_nums += 1
+            course.save()
+            # 课程标签
+            # 通过当前标签，查找数据库中的课程
+            has_fav_course = False
+            has_fav_org = False
+
+            # 必须是用户已登录我们才需要判断。
+            if request.user.is_authenticated:
+                if UserFavorite.objects.filter(user=request.user, fav_id=course.id, fav_type=1):
+                    has_fav_course = True
+                if UserFavorite.objects.filter(user=request.user, fav_id=course.course_org.id, fav_type=2):
+                    has_fav_org = True
+            tag = course.tag
+            if tag:
+                # 需要从1开始不然会推荐自己
+                relate_courses = Course.objects.filter(tag=tag)[:2]
+            else:
+                relate_courses = []
+            return  render(request, "course-detail.html", {
+                'course':course,
+                'relate_courses':relate_courses,
+                "has_fav_course": has_fav_course,
+                "has_fav_org": has_fav_org,
+            })
+    复制代码
+    course-detail.html中添加Ajax
+
+    复制代码
+    {% block custom_js %}
+        <script type="text/javascript">
+    //收藏分享
+    function add_fav(current_elem, fav_id, fav_type){
+        $.ajax({
+            cache: false,
+            type: "POST",
+            url:"{% url "org:add_fav" %}",
+            data:{'fav_id':fav_id, 'fav_type':fav_type},
+            async: true,
+            beforeSend:function(xhr, settings){
+                xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+            },
+            success: function(data) {
+                if(data.status == 'fail'){
+                    if(data.msg == '用户未登录'){
+                        window.location.href="/login/";
+                    }else{
+                        alert(data.msg)
+                    }
+
+                }else if(data.status == 'success'){
+                    current_elem.text(data.msg)
+                }
+            },
+        });
+    }
+
+    $('#jsLeftBtn').on('click', function(){
+        add_fav($(this), {{ course.id }}, 1);
+    });
+
+    $('#jsRightBtn').on('click', function(){
+        add_fav($(this), {{ course.course_org.id }}, 2);
+    });
+
+
+    </script>
+
+    {% endblock %}
 
 
 2019/6/5已完成：
@@ -30,3 +763,7 @@
 8.3、排序功能
 8.4、课程详情功能
 8.5、授课机构功能
+8.6、相关课程推荐
+
+2019/6/6问题未解决
+8.7、课程收藏和机构收藏

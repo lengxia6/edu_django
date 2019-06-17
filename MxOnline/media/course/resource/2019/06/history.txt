@@ -1,0 +1,12 @@
+﻿1  git clone https://github.com/lengxia6/github_push.git
+  
+2  git add .
+  
+3  git commit -m "add history.txt"
+  
+4  git status
+  
+5  git remote add origin https://github.com/lengxia6/github_push.git
+  
+6  git push -u origin master
+  
