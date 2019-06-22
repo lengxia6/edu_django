@@ -3,7 +3,7 @@
 
 from django.shortcuts import render
 from django.views.generic import View
-from .models import Course,CourseResource
+from .models import Course,CourseResource,Video
 from operation.models import UserFavorite,CourseComments,UserCourse
 from pure_pagination import Paginator,EmptyPage,PageNotAnInteger
 from django.http import HttpResponse
@@ -87,8 +87,8 @@ class CourseInfoView(LoginRequiredMixin,View):
     def get(self, request, course_id):
 
         course = Course.objects.get(id=int(course_id))
-        for yy in course.get_learn_users:
-            print("???",yy.id)
+        # for yy in course.get_learn_users:
+        #     print("???",yy.id)
 
         # 查询用户是否已经学习了该课程
 
@@ -186,6 +186,66 @@ class AddCommentsView(View):
 
         else:
             return HttpResponse('{"status":"fail","msg":"评论失败"}',content_type='application/json')
+
+
+class VideoPlayView(LoginRequiredMixin,View):
+    """课程章节视频播放页面"""
+
+    def get(self,request,video_id):
+        video = Video.objects.get(id=int(video_id))
+        # 通过外键找到章节再找到视频对应的课程
+        course = video.lesson.course
+
+        course.students +=1
+        course.save()
+
+        # 查询用户是否已经学过了该课程
+        user_courses = UserCourse.objects.filter(user=request.user,course=course)
+        if not user_courses:
+            # 如果没有学习该门课程就关联起来
+            user_course = UserCourse(user=request.user,course=course)
+            user_course.save()
+
+            # 相关课程推荐
+            # 找到学习这门课的所有用户
+            user_courses = UserCourse.objects.filter(course=course)
+            # for u in user_courses:
+            #     print("学习这门课的所有用户：", u)
+            # # print("***",user_courses)
+
+            # 找到学习这门课的所有用户的id
+            user_ids = [user_courses.user_id for user_courses in user_courses]
+            # print("学习这门课的所有用户的id：", user_ids)
+
+            #  通过所有用户的id，找到所有用户学习过的所有课程
+            all_user_courses = UserCourse.objects.filter(user_id__in=user_ids)
+            # for i in all_user_courses:
+            #     print("所有用户学习过课程：", i.user, i.course)
+
+            # 取出所有课程id
+            course_ids = [all_user_course.course_id for all_user_course in all_user_courses]
+            # for x in course_ids:
+            #     print("取出所有课程id:", x)
+
+            # 通过所有课程的id，找到所有所有的课程，按点击量去五个
+            relate_courses = Course.objects.filter(id__in=course_ids).order_by("-click_nums")[:5]
+            # for u in relate_courses:
+            #     print("通过所有课程的id，找到所有所有的课程，按点击量去五个:", u)
+
+            # 资源
+            all_resources = CourseResource.objects.filter(course=course)
+            # print("资源：", all_resources)
+
+            return render(request, "course-play.html", {
+                "course": course,
+                "all_resources": all_resources,
+                "relate_courses": relate_courses,
+                "video":video,
+            })
+
+
+        # 预防报错
+        return HttpResponse("测试未登录")
 
 
 

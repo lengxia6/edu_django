@@ -10,3 +10,1059 @@
     9.5、course-video.html中课程须知、老师...需优化 2019/6/18
     9.6、相关课程推荐已完成   2019/6/20
     9.7、把课程与用户关联起来已完成 2019/6/21
+    9.8、视频播放页面已完成 2019/6/22
+
+
+    9.1.模板和urls
+    拷贝course-comments.html 和 course-video.html放入 templates目录下
+
+    先改course-video.html，同样继承base.html，然后里面有属于自己的样式，也要保留
+
+    （1）配置url和视图
+
+　　# 课程章节信息页
+    re_path('info/(?P<course_id>\d+)/', CourseInfoView.as_view(), name="course_info"),
+
+    class CourseInfoView(View):
+        '''课程章节信息'''
+        def get(self, request, course_id):
+            course = Course.objects.get(id=int(course_id))
+            return render(request, "course-video.html", {
+                "course": course,
+            })
+
+    （2）配置相关的链接
+
+    首先修改course-vedio.html中custom_bread里面的链接
+    {% block custom_bread %}
+    <section>
+        <div class="wp">
+        <div class="crumbs">
+            <ul>
+                <li><a href="index.html">首页</a>></li>
+                <li><a href="{% url 'course:course_list' %}">公开课程</a>></li>
+                <li><a href="{% url 'course:course_detail' course.id %}">课程详情</a>></li>
+                <li>章节信息</li>
+            </ul>
+        </div>
+    </div>
+    </section>
+    {% endblock %}
+
+    然后修改course-detetail.html中点“开始学习”的链接
+
+
+　　　　　<div class="btns">
+        <div class="btn colectgroupbtn"  id="jsLeftBtn">
+            {% if has_fav_course %}已收藏{% else %}收藏{% endif %}
+        </div>
+            <div class="buy btn"><a style="color: white" href="{% url 'course:course_info' course.id %}">开始学习</a></div>
+        </div>
+
+    ---------9.1.模板和urls 测试---------
+
+    9.2.章节和视频
+    （1）给Vedio Model添加一个url字段
+
+    url = models.CharField('访问地址',default='',max_length=200)
+
+    在xadmin后台添加课程章节和章节视频信息及链接
+
+    （2）给Course添加一个获取章节的方法
+
+    def get_course_lesson(self):
+        #获取课程的章节
+        return self.lesson_set.all()
+
+        
+    （3）给Lesson添加一个获取所有视频的方法
+
+    def get_lesson_vedio(self):
+        #获取章节所有视频
+        return self.video_set.all()
+
+    （4）给Vedio添加一个学习时长的字段
+
+    learn_times = models.IntegerField("学习时长(分钟数)",default=0)
+
+
+    课程章节和视频
+
+    复制代码
+    <div class="mod-chapters">
+                        {% for lesson in course.get_course_lesson %}
+                        <div class="chapter chapter-active" >
+                            <h3>
+                                <strong><i class="state-expand"></i>{{ lesson.name }}</strong>
+                            </h3>
+                            <ul class="video">
+                                {% for vedio in lesson.get_lesson_vedio %}
+                                <li>
+                                    <a target="_blank" href='{{ vedio.url }}' class="J-media-item studyvideo">{{ vedio.name }} ({{ vedio.learn_times }})
+                                        <i class="study-state"></i>
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+---------9.2.章节和视频测试---------
+
+    9.3.资料下载
+    （1）在后端添加资源文件
+
+    2）view中把当前课程的课程资源传到前端
+
+    class CourseInfoView(View):
+        def get(self,request,course_id):
+            course = Course.objects.get(id=int(course_id))
+            all_resources = CourseResource.objects.filter(course=course)
+            return render(request,'course-video.html',{'course':course,'all_resources':all_resources})
+    （3）前端页面显示
+
+    复制代码
+    <div class="box mb40">
+                            <h4>资料下载</h4>
+                            <ul class="downlist">
+                                {% for course_resource in all_resources %}
+                                <li>
+                                    <span ><i class="aui-iconfont aui-icon-file"></i>&nbsp;&nbsp;{{ course_resource.name }}</span>
+                                    <a href="{{ MEDIA_URL }}{{ course_resource.download }}" class="downcode" target="_blank" download="" data-id="274" title="">下载</a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+     点下载可以下载我们在后端传上去的文件
+---------9.3.资料下载测试---------
+
+
+    把课程的信息也顺便改了
+
+
+    复制代码
+     <div class="hd">
+                    <h2 class="l">{{ course.name }}</h2>
+                </div>
+                <div class="statics clearfix">
+                    <div class="static-item ">
+                        <span class="meta-value"><strong>{{ course.get_degree_display }}</strong></span>
+                        <span class="meta">难度</span>
+                        <em></em>
+                    </div>
+                    <div class="static-item static-time">
+                        <span class="meta-value">{{ course.learn_times }}分钟</span>
+                        <span class="meta">时长</span>
+                        <em></em>
+                    </div>
+                    <div class="static-item">
+                        <span class="meta-value"><strong>{{ course.students }}</strong></span>
+                        <span class="meta">学习人数</span>
+                        <em></em>
+                    </div>
+                </div>
+
+     9.4.讲师提示
+    （1）给Course添加一个teacher外键
+
+    teacher = models.ForeignKey(Teacher,verbose_name='讲师',null=True,blank=True,on_delete=models.CASCADE)
+
+    在后台为课程添加一个讲师
+
+    （2）给Course再添加两个字段 “课程须知”和“老师告诉你能学到什么”
+
+    youneed_know = models.CharField('课程须知',max_length=300,default='')
+    teacher_tell = models.CharField('老师告诉你',max_length=300,default='')
+
+
+    （3）前端显示
+
+    复制代码
+    <div class="box mb40">
+                            <h4>讲师提示</h4>
+                            <div class="teacher-info">
+                                <a href="/u/315464/courses?sort=publish" target="_blank">
+                                    <img src='{{ MEDIA_URL }}{{ course.teacher.image }}' width='80' height='80' />
+                                </a>
+            <span class="tit">
+              <a href="/u/315464/courses?sort=publish" target="_blank">{{ course.teacher.name }}</a>
+            </span>
+                                <span class="job">{{ course.teacher.work_position }}</span>
+                            </div>
+                            <div class="course-info-tip">
+                                <dl class="first">
+                                    <dt>课程须知</dt>
+                                    <dd class="autowrap">{{ course.youneed_know }}</dd>
+                                </dl>
+                                <dl>
+                                    <dt>老师告诉你能学到什么？</dt>
+                                    <dd class="autowrap">{{ course.teacher_tell }}</dd>
+                                </dl>
+                            </div>
+                        </div>
+
+
+    ---------9.4.讲师提示测试---------
+
+    9.5.课程评论
+ （1）course-comments.html照样继承base.html
+
+
+    course-comments.html
+    {% extends 'base.html' %}
+    {% load staticfiles %}
+    {% block title %}公开课评论{% endblock %}
+
+    {% block custom_bread %}
+        <section>
+            <div class="wp">
+            <div class="crumbs">
+                <ul>
+                    <li><a href="index.html">首页</a>></li>
+                    <li><a href="{% url 'course:course_list' %}">公开课程</a>></li>
+                    <li><a href="{% url 'course:course_detail' course.id %}">公开课程</a>></li>
+                    <li>课程评论</li>
+                </ul>
+            </div>
+        </div>
+        </section>
+    {% endblock %}
+
+    {% block custom_css %}
+        <link rel="stylesheet" type="text/css" href="{% static 'css/muke/course/learn-less.css' %}" />
+        <link rel="stylesheet" type="text/css" href="{% static 'css/muke/course/course-comment.css' %}" />
+        <link rel="stylesheet" type="text/css" href="{% static 'css/muke/base.css' %}">
+        <link rel="stylesheet" type="text/css" href="{% static 'css/muke/common-less.css' %}">
+        <link rel="stylesheet" type="text/css" href="{% static 'css/muke/course/common-less.css' %}">
+        <link rel="stylesheet" type="text/css" href="{% static 'css/mooc.css' %}" />
+    {% endblock %}
+
+    {% block content %}
+        <div id="main">
+        <div class="course-infos">
+            <div class="w pr">
+                <div style="height: 15px" class="path">
+                </div>
+                <div class="hd">
+                    <h2 class="l">django与vuejs实战项目2</h2>
+                </div>
+                <div class="statics clearfix">
+                    <div class="static-item ">
+                        <span class="meta-value"><strong>高级</strong></span>
+                        <span class="meta">难度</span>
+                        <em></em>
+                    </div>
+                    <div class="static-item static-time">
+                        <span class="meta-value">0分钟</span>
+                        <span class="meta">时长</span>
+                        <em></em>
+                    </div>
+                    <div class="static-item">
+                        <span class="meta-value"><strong>12</strong></span>
+                        <span class="meta">学习人数</span>
+                        <em></em>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="course-info-main clearfix w has-progress">
+
+            <div class="info-bar clearfix">
+                <div class="content-wrap clearfix">
+                    <div class="content">
+                        <div class="mod-tab-menu">
+                            <ul class="course-menu clearfix">
+                                <li><a class="ui-tabs-active " id="learnOn"  href="course-video.html"><span>章节</span></a></li>
+                                <li><a id="commentOn" class="active" href="course-comment.html"><span>评论</span></a></li>
+                            </ul>
+                        </div>
+
+                        <!--发布评论-->
+                        <div id="js-pub-container" class="issques clearfix js-form">
+                            <div class="wgt-ipt-wrap pub-editor-wrap " id="js-pl-input-fake">
+                                <textarea id="js-pl-textarea" class="" placeholder="扯淡、吐槽、表扬、鼓励……想说啥就说啥！" ></textarea>
+                            </div>
+                            <input type="button" id="js-pl-submit" class="pub-btn" data-cid="452" value="发表评论">
+                            <p class="global-errortip js-global-error"></p>
+                        </div>
+                        <div id="course_note">
+                            <ul class="mod-post" id="comment-list">
+
+                                <li class="post-row">
+                                    <div class="media">
+                                        <span target="_blank"><img src='../media/image/2016/12/default_big_14.png' width='40' height='40' /></span>
+                                    </div>
+                                    <div class="bd">
+                                        <div class="tit">
+                                            <span target="_blank">bobby</span>
+                                        </div>
+                                        <p class="cnt">看到第三章了，虽然有些知识还不是听得很懂，但是感觉很有用的样子，想的是先听完一遍再说。然后再来听第二遍。最后想说老师棒棒哒！！！</p>
+                                        <div class="footer clearfix">
+                                            <span title="创建时间" class="l timeago">时间：2016年12月13日 22:14</span>
+                                        </div>
+                                    </div>
+                                </li>
+
+                                <li class="post-row">
+                                    <div class="media">
+                                        <span target="_blank"><img src='../media/image/2016/12/default_big_14.png' width='40' height='40' /></span>
+                                    </div>
+                                    <div class="bd">
+                                        <div class="tit">
+                                            <span target="_blank">bobby</span>
+                                        </div>
+                                        <p class="cnt">老师您讲的很好，很期待下次的课程。我有个小问题，jedi我用git clone 和 apt-get 都装上了，:help jedi-vim ,提示我E149: 抱歉，没有 jedi-vim 的说明，补全也不能用，有点搞不清楚了。我安装vim插件python-mode也不能用...</p>
+                                        <div class="footer clearfix">
+                                            <span title="创建时间" class="l timeago">时间：2016年12月13日 22:13</span>
+                                        </div>
+                                    </div>
+                                </li>
+
+                                <li class="post-row">
+                                    <div class="media">
+                                        <span target="_blank"><img src='../media/image/2016/12/default_big_14.png' width='40' height='40' /></span>
+                                    </div>
+                                    <div class="bd">
+                                        <div class="tit">
+                                            <span target="_blank">bobby</span>
+                                        </div>
+                                        <p class="cnt">你好。我在看7.3节 关于使用上下文管理的那个例子。关于telnetlib库使用的一些问题。 Telnet.read_until(expected, timeout=None) ;使用这个方法容易卡在输入登陆用户名的位置就不执行了。假如telnet到目标主机，如果提示符不是login ，就无法登陆吗？</p>
+                                        <div class="footer clearfix">
+                                            <span title="创建时间" class="l timeago">时间：2016年12月13日 22:13</span>
+                                        </div>
+                                    </div>
+                                </li>
+
+                                <li class="post-row">
+                                    <div class="media">
+                                        <span target="_blank"><img src='../media/image/2016/12/default_big_14.png' width='40' height='40' /></span>
+                                    </div>
+                                    <div class="bd">
+                                        <div class="tit">
+                                            <span target="_blank">bobby</span>
+                                        </div>
+                                        <p class="cnt">精品，老早就听医生的课了，这次的课程又让我长见识了，就像别的同学说的那样，如此简洁的实现酷炫动画的方式让我激动，赶快学完视频内容好去实现那10个任务，到时候希望徐大神好好指导指导我，如果学完后能给我个行业推荐啥的就更好了，明年就开始实习了！老紧张了--</p>
+                                        <div class="footer clearfix">
+                                            <span title="创建时间" class="l timeago">时间：2016年12月13日 22:12</span>
+                                        </div>
+                                    </div>
+                                </li>
+
+                                <li class="post-row">
+                                    <div class="media">
+                                        <span target="_blank"><img src='../media/image/2016/12/default_big_14.png' width='40' height='40' /></span>
+                                    </div>
+                                    <div class="bd">
+                                        <div class="tit">
+                                            <span target="_blank">bobby</span>
+                                        </div>
+                                        <p class="cnt">测试一下</p>
+                                        <div class="footer clearfix">
+                                            <span title="创建时间" class="l timeago">时间：2016年12月13日 22:11</span>
+                                        </div>
+                                    </div>
+                                </li>
+
+                                <li class="post-row">
+                                    <div class="media">
+                                        <span target="_blank"><img src='../media/image/2016/12/default_big_14.png' width='40' height='40' /></span>
+                                    </div>
+                                    <div class="bd">
+                                        <div class="tit">
+                                            <span target="_blank">bobby</span>
+                                        </div>
+                                        <p class="cnt">好</p>
+                                        <div class="footer clearfix">
+                                            <span title="创建时间" class="l timeago">时间：2016年12月8日 22:07</span>
+                                        </div>
+                                    </div>
+                                </li>
+
+                                <li class="post-row">
+                                    <div class="media">
+                                        <span target="_blank"><img src='../media/image/2016/12/default_big_14.png' width='40' height='40' /></span>
+                                    </div>
+                                    <div class="bd">
+                                        <div class="tit">
+                                            <span target="_blank">bobby</span>
+                                        </div>
+                                        <p class="cnt">好</p>
+                                        <div class="footer clearfix">
+                                            <span title="创建时间" class="l timeago">时间：2016年12月8日 22:07</span>
+                                        </div>
+                                    </div>
+                                </li>
+
+                                <li class="post-row">
+                                    <div class="media">
+                                        <span target="_blank"><img src='../media/image/2016/12/default_big_14.png' width='40' height='40' /></span>
+                                    </div>
+                                    <div class="bd">
+                                        <div class="tit">
+                                            <span target="_blank">bobby</span>
+                                        </div>
+                                        <p class="cnt">好</p>
+                                        <div class="footer clearfix">
+                                            <span title="创建时间" class="l timeago">时间：2016年12月8日 22:06</span>
+                                        </div>
+                                    </div>
+                                </li>
+
+                                <li class="post-row">
+                                    <div class="media">
+                                        <span target="_blank"><img src='../media/image/2016/12/default_big_14.png' width='40' height='40' /></span>
+                                    </div>
+                                    <div class="bd">
+                                        <div class="tit">
+                                            <span target="_blank">bobby</span>
+                                        </div>
+                                        <p class="cnt">再来一次</p>
+                                        <div class="footer clearfix">
+                                            <span title="创建时间" class="l timeago">时间：2016年11月5日 23:18</span>
+                                        </div>
+                                    </div>
+                                </li>
+
+                                <li class="post-row">
+                                    <div class="media">
+                                        <span target="_blank"><img src='../media/image/2016/12/default_big_14.png' width='40' height='40' /></span>
+                                    </div>
+                                    <div class="bd">
+                                        <div class="tit">
+                                            <span target="_blank">bobby</span>
+                                        </div>
+                                        <p class="cnt">good </p>
+                                        <div class="footer clearfix">
+                                            <span title="创建时间" class="l timeago">时间：2016年11月5日 23:18</span>
+                                        </div>
+                                    </div>
+                                </li>
+
+                                <li class="post-row">
+                                    <div class="media">
+                                        <span target="_blank"><img src='../media/image/2016/12/default_big_14.png' width='40' height='40' /></span>
+                                    </div>
+                                    <div class="bd">
+                                        <div class="tit">
+                                            <span target="_blank">bobby</span>
+                                        </div>
+                                        <p class="cnt">讲的很不错</p>
+                                        <div class="footer clearfix">
+                                            <span title="创建时间" class="l timeago">时间：2016年11月5日 23:13</span>
+                                        </div>
+                                    </div>
+                                </li>
+
+                                <li class="post-row">
+                                    <div class="media">
+                                        <span target="_blank"><img src='../media/image/2016/12/default_big_14.png' width='40' height='40' /></span>
+                                    </div>
+                                    <div class="bd">
+                                        <div class="tit">
+                                            <span target="_blank">bobby</span>
+                                        </div>
+                                        <p class="cnt">给问问</p>
+                                        <div class="footer clearfix">
+                                            <span title="创建时间" class="l timeago">时间：2016年11月5日 23:09</span>
+                                        </div>
+                                    </div>
+                                </li>
+
+                            </ul>
+                        </div>
+
+                    </div>
+                    <div class="aside r">
+                        <div class="bd">
+
+                            <div class="box mb40">
+                            <h4>资料下载</h4>
+                            <ul class="downlist">
+
+                                <li>
+                                    <span ><i class="aui-iconfont aui-icon-file"></i>&nbsp;&nbsp;前端页面</span>
+                                    <a href="../media/course/resource/2016/11/media.zip" class="downcode" target="_blank" download="" data-id="274" title="">下载</a>
+                                </li>
+
+                            </ul>
+                        </div>
+                            <div class="box mb40">
+                            <h4>讲师提示</h4>
+                            <div class="teacher-info">
+                                <a href="/u/315464/courses?sort=publish" target="_blank">
+                                    <img src='../media/teacher/2016/11/aobama_CXWwMef.png' width='80' height='80' />
+                                </a>
+            <span class="tit">
+              <a href="/u/315464/courses?sort=publish" target="_blank">bobby</a>
+            </span>
+                                <span class="job">xxx</span>
+                            </div>
+                            <div class="course-info-tip">
+                                <dl class="first">
+                                    <dt>课程须知</dt>
+                                    <dd class="autowrap">python基础你需要有</dd>
+                                </dl>
+                                <dl>
+                                    <dt>老师告诉你能学到什么？</dt>
+                                    <dd class="autowrap">django的进阶开发</dd>
+                                </dl>
+                            </div>
+                        </div>
+
+
+                            <div class="cp-other-learned  js-comp-tabs">
+                                <div class="cp-header clearfix">
+                                    <h2 class="cp-tit l">该课的同学还学过</h2>
+                                </div>
+                                <div class="cp-body">
+                                    <div class="cp-tab-pannel js-comp-tab-pannel" data-pannel="course" style="display: block">
+                                        <!-- img 200 x 112 -->
+                                        <ul class="other-list">
+                                            <li class="curr">
+                                                <a href="/view/85?src=sug" target="_blank">
+                                                    <img src="http://img.mukewang.com/57035ff200014b8a06000338-240-135.jpg" alt="Java入门第一季">
+                                                    <span class="name autowrap">Java入门第一季</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/view/110?src=sug" target="_blank">
+                                                    <img src="http://img.mukewang.com/5703604a0001694406000338-240-135.jpg" alt="Java入门第三季">
+                                                    <span class="name autowrap">Java入门第三季</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/view/124?src=sug" target="_blank">
+                                                    <img src="http://img.mukewang.com/570360620001390f06000338-240-135.jpg" alt="Java入门第二季">
+                                                    <span class="name autowrap">Java入门第二季</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/view/47?src=sug" target="_blank">
+                                                    <img src="http://img.mukewang.com/570765d90001bf1406000338-240-135.jpg" alt="Spring MVC起步">
+                                                    <span class="name autowrap">Spring MVC起步</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/view/36?src=sug" target="_blank">
+                                                    <img src="http://img.mukewang.com/53e1d0470001ad1e06000338-240-135.jpg" alt="JavaScript入门篇">
+                                                    <span class="name autowrap">JavaScript入门篇</span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="cp-tab-pannel js-comp-tab-pannel" data-pannel="plan">
+                                        <ul class="other-list">
+                                            <li class="curr">
+                                                <a href="/course/programdetail/pid/31?src=sug" target="_blank">
+                                                    <img src="http://img.mukewang.com/56551e6700018b0c09600720-240-135.jpg" alt="Java工程师">
+                                                    <span class="name autowrap">Java工程师</span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>    </div>
+                </div>
+                <div class="clear"></div>
+
+            </div>
+
+        </div>
+    </div>
+    {% endblock %}
+
+
+    （2）url和视图
+
+    #课程评论
+        re_path('comment/(?P<course_id>\d+)/', CommentsView.as_view(), name="course_comments"),
+
+
+    复制代码
+    class CommentsView(View):
+        '''课程评论'''
+        def get(self, request, course_id):
+            course = Course.objects.get(id=int(course_id))
+            all_resources = CourseResource.objects.filter(course=course)
+            all_comments = CourseComments.objects.all()
+            return render(request, "course-comment.html", {
+                "course": course,
+                "all_resources": all_resources,
+                'all_comments':all_comments,
+            })
+
+
+    （3）添加链接
+
+    在course-vedio.html中修改 “章节”和“评论”的链接
+
+    复制代码
+    <div class="mod-tab-menu">
+                        <ul class="course-menu clearfix">
+                            <li><a class="ui-tabs-active active" id="learnOn"  href="{% url 'course:course_info' course.id %}"><span>章节</span></a></li>
+                            <li><a id="commentOn" class="" href="{% url 'course:course_comments' course.id %}"><span>评论</span></a></li>
+                        </ul>
+                    </div>
+    复制代码
+    然后把评论页跟章节页的相同（‘课程’，‘资料下载’，‘讲师提示’）的地方直接果汁过来
+
+
+    （4）添加评论
+
+    添加评论的url和后台处理View
+
+    #添加评论
+        path('add_comment/', AddCommentsView.as_view(), name="add_comment"),
+    复制代码
+    #添加评论
+    class AddCommentsView(View):
+        '''用户评论'''
+        def post(self, request):
+            if not request.user.is_authenticated:
+                # 未登录时返回json提示未登录，跳转到登录页面是在ajax中做的
+                return HttpResponse('{"status":"fail", "msg":"用户未登录"}', content_type='application/json')
+            course_id = request.POST.get("course_id", 0)
+            comments = request.POST.get("comments", "")
+            if int(course_id) > 0 and comments:
+                # 实例化一个course_comments对象
+                course_comments = CourseComments()
+                # 获取评论的是哪门课程
+                course = Course.objects.get(id = int(course_id))
+                # 分别把评论的课程、评论的内容和评论的用户保存到数据库
+                course_comments.course = course
+                course_comments.comments = comments
+                course_comments.user = request.user
+                course_comments.save()
+                return HttpResponse('{"status":"success", "msg":"评论成功"}', content_type='application/json')
+            else:
+                return HttpResponse('{"status":"fail", "msg":"评论失败"}', content_type='application/json')
+
+    前端Ajax添加用户的评论
+
+    复制代码
+    {% block custom_js %}
+        <script type="text/javascript">
+        //添加评论
+        $('#js-pl-submit').on('click', function(){
+            var comments = $("#js-pl-textarea").val()
+            if(comments == ""){
+                alert("评论不能为空")
+                return
+            }
+            $.ajax({
+                cache: false,
+                type: "POST",
+                url:"{% url 'course:add_comment' %}",
+                data:{'course_id':{{ course.id }}, 'comments':comments},
+                async: true,
+                beforeSend:function(xhr, settings){
+                    xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                },
+                success: function(data) {
+                    if(data.status == 'fail'){
+                        if(data.msg == '用户未登录'){
+                            window.location.href="/login/";
+                        }else{
+                            alert(data.msg)
+                        }
+
+                    }else if(data.status == 'success'){
+                        window.location.reload();//刷新当前页面.
+                    }
+                },
+            });
+        });
+
+    </script>
+    {% endblock %}
+
+
+     显示评论的信息
+
+    复制代码
+    <div id="course_note">
+                                <ul class="mod-post" id="comment-list">
+                                    {% for user_comment in all_comments %}
+                                        <li class="post-row">
+                                            <div class="media">
+                                            <span target="_blank"><img src='{{ MEDIA_URL }}{{ user_comment.user.image }}'
+                                                                       width='40' height='40'/></span>
+                                            </div>
+                                            <div class="bd">
+                                                <div class="tit">
+                                                    <span target="_blank">{{ user_comment.user.username }}</span>
+                                                </div>
+                                                <p class="cnt">
+                                                    {{ user_comment.comments }}
+                                                <div class="footer clearfix">
+                                                    <span title="创建时间"
+                                                          class="l timeago">时间：{{ user_comment.add_time }}</span>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    {% endfor %}
+
+
+                                </ul>
+                            </div>
+
+
+---------9.5.课程评论测试--------
+
+     9.6.相关课程推荐
+    (1)view
+
+    复制代码
+    #相关课程推荐
+            # 找到学习这门课的所有用户
+            user_courses = UserCourse.objects.filter(course=course)
+            # 找到学习这门课的所有用户的id
+            user_ids = [user_course.user_id for user_course in user_courses]
+            # 通过所有用户的id,找到所有用户学习过的所有过程
+            all_user_courses = UserCourse.objects.filter(user_id__in=user_ids)
+            # 取出所有课程id
+            course_ids = [all_user_course.course_id for all_user_course in all_user_courses]
+            # 通过所有课程的id,找到所有的课程，按点击量去五个
+            relate_courses = Course.objects.filter(id__in=course_ids).order_by("-click_nums")[:5]
+
+
+    (2)前端  coure-vedio.html
+
+    复制代码
+    <div class="cp-other-learned  js-comp-tabs">
+                            <div class="cp-header clearfix">
+                                <h2 class="cp-tit l">该课的同学还学过</h2>
+                            </div>
+                            <div class="cp-body">
+                                <div class="cp-tab-pannel js-comp-tab-pannel" data-pannel="course" style="display: block">
+                                    <!-- img 200 x 112 -->
+                                    <ul class="other-list">
+                                        {% for relate_course in relate_courses %}
+                                        <li class="curr">
+                                            <a href="{% url 'course:course_detail' relate_course.id %}" target="_blank">
+                                                <img src="{{ MEDIA_URL }}{{ relate_course.image }}" alt="{{ relate_course.name }}">
+                                                <span class="name autowrap">{{ relate_course.name }}</span>
+                                            </a>
+                                        </li>
+                                        {% endfor %}
+
+                                    </ul>
+                                </div>
+
+                            </div>
+                        </div>
+
+
+---------9.6.相关课程推荐测试----------
+
+    当用户点了“开始学习”之后，应该把这门课程与用户关联起来，在这之前应该需要做个判断，如果没有登录，则让用户先登录才可以。
+
+
+
+    如果是用函数方式写的话直接加个装饰器（@login_required）就可以，但是我们是用类的方式写的，必须用继承的方式
+
+    在utils目录下创建文件  mixin_utils.py（最基本的类都放在mixin_utils.py里面），代码如下：
+
+    复制代码
+    # apps/utils/mixin_utils.py
+
+    from django.contrib.auth.decorators import login_required
+    from django.utils.decorators import method_decorator
+
+    class LoginRequiredMixin(object):
+        @method_decorator(login_required(login_url='/login/'))
+        def dispatch(self,request,*args,**kwargs):
+            return super(LoginRequiredMixin, self).dispatch(request,*args,**kwargs)
+    复制代码
+    在django中已Mixin结尾的，就代表最基本的View
+
+    然后让CourseInfoView和CommentsView都继承LoginRequiredMixin
+
+    复制代码
+    class CommentsView(LoginRequiredMixin,View):
+    .
+    .
+    .
+    class CourseInfoView(LoginRequiredMixin,View):
+    .
+    .
+    .
+    复制代码
+     继承后，没有登录的用户点“开始学习”，自动跳到login界面
+
+    把用户与课程关联起来
+
+    复制代码
+    # 查询用户是否已经学习了该课程
+            user_courses = UserCourse.objects.filter(user=request.user,course=course)
+            if not user_courses:
+                # 如果没有学习该门课程就关联起来
+                user_course = UserCourse(user=request.user,course=course)
+                user_course.save()
+
+    现在你点“开始学习”其它课程后，在“该课的同学好学过”下面能看到，说明没问题
+
+---------9.7.把课程与用户关联起来测试------------
+
+    9.8.视频播放页面
+    （1）把course-paly.html拷贝到templates目录下
+
+    主要不同的是css和一个vedio div
+
+    下载video-js.min.css和video.min.js分别放到css和js目录下
+
+
+
+    （2）url
+
+    # 课程视频播放页
+        path('video/(?P<video_id>\d+)/', VideoPlayView.as_view(), name="video_play"),
+    （3）修改course-video.html中video的链接
+
+    复制代码
+    　　　　　　　　　　　　　　　　　　<li>
+                                    <a target="_blank" href='{% url 'course:video_play' vedio.id %}' class="J-media-item studyvideo">{{ vedio.name }} ({{ vedio.learn_times }})
+                                        <i class="study-state"></i>
+                                    </a>
+                                </li>
+    复制代码
+    （4）view
+
+    复制代码
+    class VideoPlayView(LoginRequiredMixin, View):
+        '''课程章节视频播放页面'''
+        def get(self,request,video_id):
+            video = Video.objects.get(id=int(video_id))
+            #通过外键找到章节再找到视频对应的课程
+            course = video.lesson.course
+
+            course.students += 1
+            course.save()
+
+            # 查询用户是否已经学习了该课程
+            user_courses = UserCourse.objects.filter(user=request.user,course=course)
+            if not user_courses:
+                # 如果没有学习该门课程就关联起来
+                user_course = UserCourse(user=request.user,course=course)
+                user_course.save()
+
+            #相关课程推荐
+            # 找到学习这门课的所有用户
+            user_courses = UserCourse.objects.filter(course=course)
+            # 找到学习这门课的所有用户的id
+            user_ids = [user_course.user_id for user_course in user_courses]
+            # 通过所有用户的id,找到所有用户学习过的所有过程
+            all_user_courses = UserCourse.objects.filter(user_id__in=user_ids)
+            # 取出所有课程id
+            course_ids = [all_user_course.course_id for all_user_course in all_user_courses]
+            # 通过所有课程的id,找到所有的课程，按点击量去五个
+            relate_courses = Course.objects.filter(id__in=course_ids).order_by("-click_nums")[:5]
+
+            # 资源
+            all_resources = CourseResource.objects.filter(course=course)
+            return render(request,'course-play.html',{
+                'course':course,
+                'all_resources':all_resources,
+                'relate_courses':relate_courses,
+                'video':video,
+            })
+    复制代码
+     Views.py
+    复制代码
+    {% extends 'base.html' %}
+
+    {% block titile %}
+        {{ video.name }} 在线网
+    {% endblock %}
+
+    {% load staticfiles %}
+    <!--crumbs start-->
+    {% block custom_bread %}
+        <section>
+            <div class="wp">
+                <div class="crumbs">
+                    <ul>
+                        <li><a href="{% url 'index' %}">首页</a>></li>
+                        <li><a href="{% url 'course:course_list' %}">公开课程</a>></li>
+                        <li><a href="{% url 'course:course_detail' course.id %}">{{ course.name }}</a>></li>
+                        <li></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    {% endblock %}
+
+    {% block custom_css %}
+        <link rel="stylesheet" type="text/css" href="{% static 'css/video-js.min.css' %}">
+        <link rel="stylesheet" type="text/css" href="{% static 'css/muke/base.css' %}"/>
+        <link rel="stylesheet" type="text/css" href="{% static 'css/muke/common-less.css' %}"/>
+        <link rel="stylesheet" type="text/css" href="{% static 'css/muke/course/learn-less.css' %}"/>
+        <link rel="stylesheet" type="text/css" href="{% static 'css/mooc.css' %}"/>
+        <link rel="stylesheet" type="text/css" href="{% static 'css/muke/course/common-less.css' %}">
+        <style>
+            .video-js .vjs-big-play-button {
+                top: 50%;
+                left: 50%;
+            }
+        </style>
+    {% endblock %}
+
+    {% block custom_js %}
+        <script src="{% static 'js/video.min.js' %}" type="text/javascript"></script>
+    {% endblock %}
+
+    {% block content %}
+        <div id="main">
+
+            <div class="course-info-main clearfix w has-progress">
+                <div style="width:1200px;height: 650px; margin-left:100px">
+                    <video id="example_video_1" class="video-js vjs-default-skin" controls preload="none" width="1200"
+                           poster="http://video-js.zencoder.com/oceans-clip.png"
+                           data-setup="" type="video/mp4">
+                        <source src="{{ video.url }}">
+                    </video>
+                </div>
+                <div class="info-bar clearfix">
+                    <div class="content-wrap clearfix">
+                        <div class="content">
+                            <div class="mod-tab-menu">
+                                <ul class="course-menu clearfix">
+                                    <li><a class="ui-tabs-active active" id="learnOn"
+                                           href="{% url 'course:course_info' course.id %}"><span>章节</span></a></li>
+                                    <li><a id="commentOn" class=""
+                                           href="{% url 'course:course_comments' course.id %}"><span>评论</span></a></li>
+                                </ul>
+                            </div>
+                            <div id="notice" class="clearfix">
+                                <div class="l"><strong>课程公告:</strong> <a
+                                        href="javascript:void(0)">Spring的文档以及相关的jar文件已上传</a></div>
+                            </div>
+
+                            <div class="mod-chapters">
+                                {% for lesson in course.lesson_set.get_queryset %}
+                                    <div class="chapter chapter-active">
+                                        <h3>
+                                            <strong><i class="state-expand"></i>{{ lesson.name }}</strong>
+                                        </h3>
+                                        <ul class="video">
+
+                                            {% for video in lesson.video_set.get_queryset %}
+                                                <li>
+                                                    <a target="_blank" href='{% url 'course:video_play' video.id %}'
+                                                       class="J-media-item studyvideo">{{ video.name }}
+                                                        ({{ video.learn_times }})
+                                                        <i class="study-state"></i>
+                                                    </a>
+                                                </li>
+                                            {% endfor %}
+
+                                        </ul>
+                                    </div>
+                                {% endfor %}
+                            </div>
+
+                        </div>
+                        <div class="aside r">
+                            <div class="bd">
+
+                                <div class="box mb40">
+                                    <h4>资料下载</h4>
+                                    <ul class="downlist">
+                                        {% for course_resource in course.courseresource_set.get_queryset %}
+                                            <li>
+                                                <span><i
+                                                        class="aui-iconfont aui-icon-file"></i>&nbsp;&nbsp;{{ course_resource.name }}</span>
+                                                <a href="{{ MEDIA_URL }}{{ course_resource.download }}" class="downcode"
+                                                   target="_blank" download="" data-id="274" title="">下载</a>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <div class="box mb40">
+                                    <h4>讲师提示</h4>
+                                    <div class="teacher-info">
+                                        <a href="{% url 'org:teacher_detail' course.teacher.id %}" target="_blank">
+                                            <img src='{{ MEDIA_URL }}{{ course.teacher.image }}' width='80' height='80'/>
+                                        </a>
+                                        <span class="tit">
+              <a href="{% url 'org:teacher_detail' course.teacher.id %}" target="_blank">{{ course.teacher.name }}</a>
+            </span>
+                                        <span class="job">{{ course.teacher.work_position }}</span>
+                                    </div>
+                                    <div class="course-info-tip">
+                                        <dl class="first">
+                                            <dt>课程须知</dt>
+                                            <dd class="autowrap">{{ course.you_need_know }}</dd>
+                                        </dl>
+                                        <dl>
+                                            <dt>老师告诉你能学到什么？</dt>
+                                            <dd class="autowrap">{{ course.teacher_tell }}</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+
+
+                                <div class="cp-other-learned  js-comp-tabs">
+                                    <div class="cp-header clearfix">
+                                        <h2 class="cp-tit l">该课的同学还学过</h2>
+                                    </div>
+                                    <div class="cp-body">
+                                        <div class="cp-tab-pannel js-comp-tab-pannel" data-pannel="course"
+                                             style="display: block">
+                                            <!-- img 200 x 112 -->
+                                            <ul class="other-list">
+
+                                                {% for relate_course in relate_courses %}
+                                                    <li class="curr">
+                                                        <a href="{% url 'course:course_detail' relate_course.id %}"
+                                                           target="_blank">
+                                                            <img src="{{ MEDIA_URL }}{{ relate_course.image }}"
+                                                                 alt="{{ relate_course.name }}">
+                                                            <span class="name autowrap">{{ relate_course.name }}</span>
+                                                        </a>
+                                                    </li>
+                                                {% endfor %}
+
+                                            </ul>
+                                        </div>
+                                        <div class="cp-tab-pannel js-comp-tab-pannel" data-pannel="plan">
+                                            <ul class="other-list">
+
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="clear"></div>
+
+                </div>
+
+            </div>
+        </div>
+    {% endblock %}
+
+------------9.8.视频播放页面测试-------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

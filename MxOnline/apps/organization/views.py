@@ -4,7 +4,7 @@ from django.shortcuts import render
 # Create your views here.
 from django.shortcuts import render
 from django.views.generic.base import View
-from .models import CityDict,CourseOrg
+from .models import CityDict,CourseOrg,Teacher
 from .forms import UserAskForm
 from django.http import HttpResponse
 from operation.models import UserFavorite
@@ -168,5 +168,46 @@ class AddFavView(View):
                 return HttpResponse('{"status":"success", "msg":"已收藏"}', content_type='application/json')
             else:
                 return HttpResponse('{"status":"fail", "msg":"收藏出错"}', content_type='application/json')
+
+
+# 讲师列表
+class TeacherListView(View):
+    def get(self,request):
+        all_teachers = Teacher.objects.all()
+        return render(request,'teacher-list.html',{
+            'all_teachers':all_teachers,
+        })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

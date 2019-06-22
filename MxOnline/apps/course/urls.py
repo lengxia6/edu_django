@@ -3,7 +3,7 @@
 # course/urls.py
 
 from django.urls import path,re_path
-from .views import CourseListView,CourseDetailView,CourseInfoView,CommentsView,AddCommentsView
+from .views import CourseListView,CourseDetailView,CourseInfoView,CommentsView,AddCommentsView,VideoPlayView
 
 # 要写上app的名字
 
@@ -24,5 +24,14 @@ urlpatterns = [
     # 添加评论
     path('add_comment/',AddCommentsView.as_view(),name="add_comment"),
 
+    # 课程视频播放页
+    re_path('video/(?P<video_id>\d+)/',VideoPlayView.as_view(),name="video_play"),
+
 
 ]
+
+
+
+
+
+

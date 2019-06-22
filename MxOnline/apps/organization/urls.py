@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # @Author:Ji ziting
 
-from organization.views import OrgView,AddUserAskView,AddFavView
+from organization.views import OrgView,AddUserAskView,AddFavView,TeacherListView
 
 from django.urls import path,re_path
 from .views import OrgHomeView,OrgCourseView,OrgDescView,OrgTeacherView
@@ -18,5 +18,7 @@ urlpatterns = [
     re_path('desc/(?P<org_id>\d+)/',OrgDescView.as_view(),name="org_desc"),
     re_path('teacher/(?P<org_id>\d+)/',OrgTeacherView.as_view(),name="org_teacher"),
     path('add_fav/',AddFavView.as_view(),name="add_fav"),
+    # 讲师列表
+    re_path('teacher/list/',TeacherListView.as_view(),name="teacher_list"),
 
 ]
