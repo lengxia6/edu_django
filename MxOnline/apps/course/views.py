@@ -6,8 +6,10 @@ from django.views.generic import View
 from .models import Course,CourseResource,Video
 from operation.models import UserFavorite,CourseComments,UserCourse
 from pure_pagination import Paginator,EmptyPage,PageNotAnInteger
+from django.core.paginator import Paginator
 from django.http import HttpResponse
 from utils.mixin_utils import LoginRequiredMixin
+from django.db.models import Q
 
 class CourseListView(View):
     def get(self, request):
@@ -16,6 +18,18 @@ class CourseListView(View):
         # 热门课程推荐
 
         hot_courses = Course.objects.all().order_by('-click_nums')[:3]
+
+        # 搜索功能
+        search_keywords = request.GET.get('keywords','')
+        if search_keywords:
+            # 在name字段进行操作，做like语句的操作，i代表不区分大小写
+            # or操作使用Q
+            all_courses = all_courses.filter(Q(name_icontains=search_keywords) | Q(desc_icontains=search_keywords) | Q(
+                detail_icontains=search_keywords
+            ))
+
+
+
         # 排序
         sort = request.GET.get('sort',"")
 

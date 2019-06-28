@@ -4,7 +4,7 @@
 from organization.views import OrgView,AddUserAskView,AddFavView,TeacherListView
 
 from django.urls import path,re_path
-from .views import OrgHomeView,OrgCourseView,OrgDescView,OrgTeacherView
+from .views import OrgHomeView,OrgCourseView,OrgDescView,OrgTeacherView,TeacherDetailView
 
 
 # 要写上app的名字
@@ -20,5 +20,8 @@ urlpatterns = [
     path('add_fav/',AddFavView.as_view(),name="add_fav"),
     # 讲师列表
     re_path('teacher/list/',TeacherListView.as_view(),name="teacher_list"),
+
+    # 讲师详情
+    re_path('teacher/detail/(?P<teacher_id>\d+)/',TeacherDetailView.as_view(),name="teacher_detail"),
 
 ]
