@@ -18,7 +18,7 @@ from django.urls import path,include,re_path
 from extra_apps import xadmin
 from django.views.generic import RedirectView,TemplateView
 # from users import views
-from users.views import LoginView,RegisterView,ActiveUserView,ForgetPwdView,ResetView,ModifyPwdView
+from users.views import LoginView,RegisterView,ActiveUserView,ForgetPwdView,ResetView,ModifyPwdView,LogoutView,IndexView
 from organization.views import OrgView
 from django.views.static import serve
 from MxOnline.settings import MEDIA_ROOT
@@ -28,8 +28,9 @@ urlpatterns = [
     # path('admin/', admin.site.urls),
     path('xadmin/',xadmin.site.urls),
     # path('', RedirectView.as_view(url='/xadmin/')),
-    path('',TemplateView.as_view(template_name='index.html'),name='index'),
+    path('',IndexView.as_view(),name='index'),
     path('login/',LoginView.as_view(),name='login'),
+    path('logout/',LogoutView.as_view(),name='logout'),
     path('register/',RegisterView.as_view(),name= 'register'),
     path('captcha/',include('captcha.urls')),
     re_path('active/(?P<active_code>.*)/',ActiveUserView.as_view(),name='user_active'),
@@ -43,7 +44,14 @@ urlpatterns = [
 
     path("course/",include('course.urls',namespace="course")),
 
+    # 个人信息
+    path("users/",include('users.urls',namespace="users")),
+
+
 
 
 
 ]
+
+
+#

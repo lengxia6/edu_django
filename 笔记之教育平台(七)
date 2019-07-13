@@ -11,16 +11,1105 @@
     10.7.全局搜索功能已完成     2019/6/28
 
 
-#########（七）笔记未整理#########
-
 第七节:10.1.讲师列表页功能、10.2.分页功能、10.3.排序功能、10.4.讲师详情页展示功能、10.5.收藏功能功能、10.6.配置全局导航功能、10.7.全局搜索功能
 
 
 
+十、授课教师
+     10.1.讲师列表页
+    拷贝teacher-list.html和teacher-detail.html到templates目录下
+
+     先改teacher-list.html，同样继承base.html
+
+     1）urls配置
+
+    organazition/urls.py
+
+    　　# 讲师列表
+        re_path('teacher/list/', TeacherListView.as_view(), name="teacher_list"),
+    (2)给Teacher Model添加一个年龄字段
+
+    teacher_age = models.IntegerField('年龄',default=25)
+    （3）view和模板
+
+    复制代码
+    # 讲师列表
+    class TeacherListView(View):
+        def get(self, request):
+            all_teachers = Teacher.objects.all()
+            return render(request,'teachers-list.html',{
+                'all_teachers':all_teachers,
+            })
+    复制代码
+    复制代码
+    {% for teacher in all_teachers %}
+                        <dl class="des">
+                        <dt>
+                            <a href="/org/teacher/detail/1/">
+                                <div class="picpic">
+                                    <img width="100" height="100" class="scrollLoading" src="{{ MEDIA_URL }}{{ teacher.image }}"/>
+                                </div>
+                            </a>
+                            <div class="btn">
+                                <div class="fr btn2 bdsharebuttonbox"
+                                     data-text="授课教师-奥巴马-慕学在线"
+                                     data-desc="我在#慕课网#发现了教师“奥巴马”，对学习中的小伙伴很有帮助，一起来看看吧。"
+                                     data-comment="奥巴马金牌讲师，从业年限：5年"
+                                     >
+                                    <span class="fl">分享</span>
+                                    <a href="#" class="bds_more" data-cmd="more"></a>
+                                </div>
+                            </div>
+                        </dt>
+                        <dd>
+                            <a href="/org/teacher/detail/1/">
+                                <h1>{{ teacher.name }}<span class="key picbig">金牌讲师</span></h1>
+                            </a>
+                            <ul class="cont">
+                                <li>工作年限：<span>{{ teacher.work_years }}年</span></li>
+                                <li>工作职位：<span>{{ teacher.work_position }}</span></li>
+                                <li>就职公司：<span>{{ teacher.work_company }}&nbsp;</span></li>
+                                <li>年龄：<span>{{ teacher.teacher_age }}岁</span></li>
+                                <li>教学特点：<span>{{ teacher.points }}</span></li>
+                            </ul>
+                        </dd>
+                        <a class="buy buyservice" href="/org/teacher/detail/1/"><br/>查看<br/>详情</a>
+                    </dl>
+                    {% endfor %}
+
+    10.2.分页
+
+        # 讲师列表
+    class TeacherListView(View):
+        def get(self, request):
+            all_teachers = Teacher.objects.all()
+            # 总共有多少老师使用count进行统计
+            teacher_nums = all_teachers.count()
+            # 进行分页
+            try:
+                page = request.GET.get('page', 1)
+            except PageNotAnInteger:
+                page = 1
+            p = Paginator(all_teachers, 1, request=request)
+            teachers = p.page(page)
+            return render(request, "teachers-list.html", {
+                "all_teachers": teachers,
+                "teacher_nums": teacher_nums
+            })
+    复制代码
+
+
+    复制代码
+    <div class="pageturn">
+                            <ul class="pagelist">
+                                {% if all_teachers.has_previous %}
+                                    <li class="long"><a href="?{{ all_teachers.previous_page_number.querystring }}">上一页</a></li>
+                                {% endif %}
+
+                                {% for page in all_teachers.pages %}
+                                    {% if page %}
+                                        {% ifequal page all_teachers.number %}
+                                            <li class="active"><a href="?{{ page.querystring }}">{{ page }}</a></li>
+                                        {% else %}
+                                            <li><a href="?{{ page.querystring }}" class="page">{{ page }}</a></li>
+                                        {% endifequal %}
+                                    {% else %}
+                                        <li class="none"><a href="">...</a></li>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if all_teachers.has_next %}
+                                    <li class="long"><a href="?{{ all_teachers.next_page_number.querystring }}">下一页</a></li>
+                                {% endif %}
+                            </ul>
+                        </div>
+
+    10.3.排序
+    复制代码
+    # 讲师列表
+    class TeacherListView(View):
+        def get(self, request):
+            all_teachers = Teacher.objects.all()
+            # 总共有多少老师使用count进行统计
+            teacher_nums = all_teachers.count()
+
+            # 人气排序
+            sort = request.GET.get('sort','')
+            if sort:
+                if sort == 'hot':
+                    all_teachers = all_teachers.order_by('-click_nums')
+
+            #讲师排行榜
+            sorted_teacher = Teacher.objects.all().order_by('-click_nums')[:3]
+            # 进行分页
+            try:
+                page = request.GET.get('page', 1)
+            except PageNotAnInteger:
+                page = 1
+            p = Paginator(all_teachers, 1, request=request)
+            teachers = p.page(page)
+            return render(request, "teachers-list.html", {
+                "all_teachers": teachers,
+                "teacher_nums": teacher_nums,
+                'sorted_teacher':sorted_teacher,
+                'sort':sort,
+            })
+    复制代码
+    排序
+
+    <ul class="fl tab_header">
+                        <li {% if sort == '' %}class="active"{% endif %}><a href="?sort=">全部</a> </li>
+                        <li {% if sort == 'hot' %}class="active"{% endif %}><a href="?sort=hot">人气 &#8595;</a></li>
+                    </ul>
+    讲师排行榜
+
+    复制代码
+    <div class="right layout">
+            <div class="head">讲师排行榜</div>
+                {% for hot_teacher in sorted_teacher %}
+                <dl class="des">
+                    <span class="num fl">1</span>
+                    <a href="/diary/hk_detail/6/">
+                        <dt>
+                            <img width="50" height="50" class="scrollLoading"  src="{{ MEDIA_URL }}{{ hot_teacher.image }}"/>
+                        </dt>
+                    </a>
+                    <dd>
+                        <a href="/diary/hk_detail/6/">
+                            <h1 title="{{ hot_teacher.name }}">{{ hot_teacher.name }}</h1>
+                        </a>
+                        <p>工作年限：<span>{{ hot_teacher.work_years }}年</span></p>
+                    </dd>
+                </dl>
+                {% endfor %}
+        </div>
+
+
+    10.5.收藏功能
+    view和前端
+
+    复制代码
+    # 教师收藏和机构收藏
+            has_teacher_faved = False
+            if UserFavorite.objects.filter(user=request.user, fav_type=3, fav_id=teacher.id):
+                has_teacher_faved = True
+
+            has_org_faved = False
+            if UserFavorite.objects.filter(user=request.user, fav_type=2, fav_id=teacher.org.id):
+                has_org_faved = True
+    复制代码
+    {% if has_teacher_faved %}已收藏{% else %}收藏{% endif %}
+
+    <a class="btn" id="jsRightBtn">{% if has_org_faved %}已收藏{% else %}收藏{% endif %}</a>
+
+
+    teacher-detail.html Ajax代码如下：
+
+    复制代码
+    {% block custom_js %}
+        <script type="text/javascript">
+    //收藏分享
+    function add_fav(current_elem, fav_id, fav_type){
+        $.ajax({
+            cache: false,
+            type: "POST",
+            url:"{% url "org:add_fav" %}",
+            data:{'fav_id':fav_id, 'fav_type':fav_type},
+            async: true,
+            beforeSend:function(xhr, settings){
+                xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+            },
+            success: function(data) {
+                if(data.status == 'fail'){
+                    if(data.msg == '用户未登录'){
+                        window.location.href="/login/";
+                    }else{
+                        alert(data.msg)
+                    }
+
+                }else if(data.status == 'success'){
+                    current_elem.text(data.msg)
+                }
+            },
+        });
+    }
+
+    $('#jsLeftBtn').on('click', function(){
+        add_fav($(this), {{ teacher.id }}, 3);
+    });
+
+    $('#jsRightBtn').on('click', function(){
+        add_fav($(this), {{ teacher.org.id }}, 2);
+    });
+    </script>
+    {% endblock %}
+    复制代码
+
+    {#templates/teacher-detail.html#}
+
+    {% extends 'base.html' %}
+    {% load staticfiles %}
+    {% block title %}讲师详情{% endblock %}
+
+    {% block custom_bread %}
+        <section>
+            <div class="wp">
+                <ul class="crumbs">
+                    <li><a href="index.html">首页</a>></li>
+                    <li><a href="{% url 'org:teacher_list' %}">授课讲师</a>></li>
+                    <li>讲师详情</li>
+                </ul>
+            </div>
+        </section>
+    {% endblock %}
+
+
+    {% block content %}
+        <section>
+        <div class="wp butler-detail-box butler-diaryd-box clearfix">
+            <div class="fl list">
+                <div class="butler_detail_list clearfix">
+                    <div class="brief">
+                        <dl class="des">
+                            <dt>
+                                <div class="picpic">
+                                    <img width="100" height="100" src="{{ MEDIA_URL }}{{ teacher.image }}"/>
+                                </div>
+                                <div class="btn">
+                                    <span class="fl btn1 collectionbtn" id="jsLeftBtn">
+                                         {% if has_teacher_faved %}已收藏{% else %}收藏{% endif %}
+                                    </span>
+                                    <span class="fr btn2 shareBtn bdsharebuttonbox"
+                                          data-text="授课教师-李老师-慕学网"
+                                          data-desc="我在#慕课网#发现了"
+                                          data-comment="李老师，工作年限：5年；学历：本科；所在公司：阿里巴巴&nbsp;；经典案例：django入门和深入；flask入门"
+                                          data-url="/diary/hk_detail/10/">
+                                        <span class="fl">分享</span>
+                                        <a href="#" class="bds_more" data-cmd="more"></a>
+                                    </span>
+                                </div>
+                            </dt>
+                            <dd>
+                                <a href="/diary/hk_detail/10/">
+                                    <h1>{{ teacher.name }}<span class="key picbig">金牌讲师</span></h1>
+                                </a>
+                                <ul class="cont">
+                                    <li>工作年限：<span>{{ teacher.work_years }}年</span></li>
+                                    <li>就职公司：<span>{{ teacher.work_company }}</span></li>
+                                    <li>工作职位：<span>{{ teacher.work_position }}&nbsp;</span></li>
+                                    <li>教学特点：<span>{{ teacher.points }}</span></li>
+                                </ul>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+                <div class="butler_detail_cont clearfix">
+                    <div class="left layout">
+                    <div class="head">
+                        <ul class="tab_header">
+                            <li class="active"><a href="/diary/hk_detail/10/">全部课程</a> </li>
+                        </ul>
+                    </div>
+                        <div class="companycenter">
+                            <div class="group_list brief">
+                                {% for teacher_course in all_course %}
+                                <div class="module1_5 box">
+                                    <a href="{% url 'course:course_detail' teacher_course.id %}">
+                                        <img width="214" height="190" class="scrollLoading" src="{{ MEDIA_URL }}{{ teacher_course.image }}"/>
+                                    </a>
+                                    <div class="des">
+                                        <a href="{% url 'course:course_detail' teacher_course.id %}"><h2>{{ teacher_course.name }}</h2></a>
+                                        <span class="fl">时长：<i class="key">{{ teacher_course.learn_times }}</i></span>
+                                        <span class="fr">学习人数：{{ teacher_course.students }}</span>
+                                    </div>
+                                    <div class="bottom">
+                                        <span class="fl">{{ teacher_course.course_org.name }}</span>
+                                        <span class="star fr  notlogin" data-favid="15">{{ teacher_course.fav_nums }}</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
 
 
 
+                            </div>
+                        </div>
+                    <!--<div class="pageturn">-->
+                        <!--<ul class="pagelist">-->
+                            <!--<li class="active"><a href="?page=1">1</a></li>-->
+                        <!--</ul>-->
+                    <!--</div>-->
+                </div>
+                </div>
+            </div>
+
+
+            <div class="fr list">
+                 <div class="butler_detail_list">
+                    <div class="right butler-company-box">
+                    <div class="head">
+                        <h1>{{ teacher.org.name }}</h1>
+                        <p>知名高校，权威教学</p>
+                    </div>
+                    <div class="pic">
+                        <a href="{% url 'org:org_home' teacher.org.id %}">
+                            <img width="150" height="80" src="{{ MEDIA_URL }}{{ teacher.org.image }}"/>
+                        </a>
+                    </div>
+                    <a href="{% url 'org:org_home' teacher.org.id %}">
+                        <h2 class="center">{{ teacher.org.name }}</h2>
+                    </a>
+                    <p class="center tell">地址：{{ teacher.org.address }}</p>
+                    <a class="btn" id="jsRightBtn">{% if has_org_faved %}已收藏{% else %}收藏{% endif %}</a>
+                </div>
+                </div>
+
+                <div class="butler_detail_cont">
+                    <div class="butler_list_box">
+                        <div class="right layout">
+                            <div class="head">讲师排行榜</div>
+                            {% for hot_teacher in sorted_teacher %}
+                            <dl class="des">
+                                <span class="num fl">1</span>
+                                <a href="{% url 'org:teacher_detail' hot_teacher.id %}">
+                                    <dt>
+                                        <img width="50" height="50" class="scrollLoading" src="{{ MEDIA_URL }}{{ hot_teacher.image }}"/>
+                                    </dt>
+                                </a>
+                                <dd>
+                                    <a href="{% url 'org:teacher_detail' hot_teacher.id %}">
+                                        <h1 title="bobby">{{ hot_teacher.name }}</h1>
+                                    </a>
+                                    <p>工作年限：<span>{{ hot_teacher.work_years }}年</span></p>
+                                </dd>
+                            </dl>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    {% endblock %}
+
+
+    {% block custom_js %}
+        <script type="text/javascript">
+    //收藏分享
+    function add_fav(current_elem, fav_id, fav_type){
+        $.ajax({
+            cache: false,
+            type: "POST",
+            url:"{% url "org:add_fav" %}",
+            data:{'fav_id':fav_id, 'fav_type':fav_type},
+            async: true,
+            beforeSend:function(xhr, settings){
+                xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+            },
+            success: function(data) {
+                if(data.status == 'fail'){
+                    if(data.msg == '用户未登录'){
+                        window.location.href="/login/";
+                    }else{
+                        alert(data.msg)
+                    }
+
+                }else if(data.status == 'success'){
+                    current_elem.text(data.msg)
+                }
+            },
+        });
+    }
+
+    $('#jsLeftBtn').on('click', function(){
+        add_fav($(this), {{ teacher.id }}, 3);
+    });
+
+    $('#jsRightBtn').on('click', function(){
+        add_fav($(this), {{ teacher.org.id }}, 2);
+    });
+    </script>
+    {% endblock %}
 
 
 
+    10.6.配置全局导航
+    （1）index.html继承base.html
+
+    注意首页有个单独的“index.js”
+
+    {% extends 'base.html' %}
+    {% load staticfiles %}
+    {% block title %}课程机构列表{% endblock %}
+
+    {% block custom_bread %}
+    {% endblock %}
+
+    {% block content %}
+        <div class="banner">
+                <div class="wp">
+                    <div class="fl">
+                        <div class="imgslide">
+                            <ul class="imgs">
+
+                                <li>
+                                        <a href="http://www.imooc.com">
+                                            <img width="1200" height="478" src="/static/media/banner/2016/11/57a801860001c34b12000460.jpg" />
+                                        </a>
+                                    </li>
+
+                                <li>
+                                        <a href="http://www.projectsedu.com">
+                                            <img width="1200" height="478" src="/static/media/banner/2016/11/57aa86a0000145c512000460.jpg" />
+                                        </a>
+                                    </li>
+
+                                <li>
+                                        <a href="http://www.projectsedu.com">
+                                            <img width="1200" height="478" src="/static/media/banner/2016/11/57a801860001c34b12000460_z4Vb8zl.jpg" />
+                                        </a>
+                                    </li>
+
+                                <li>
+                                        <a href="http://www.projectsedu.com">
+                                            <img width="1200" height="478" src="/static/media/banner/2016/11/57aa86a0000145c512000460_nMwvoQD.jpg" />
+                                        </a>
+                                    </li>
+
+                                <li>
+                                        <a href="http://www.projectsedu.com">
+                                            <img width="1200" height="478" src="/static/media/banner/2016/11/57aa86a0000145c512000460_GXIBATC.jpg" />
+                                        </a>
+                                    </li>
+
+
+                            </ul>
+                        </div>
+                        <div class="unslider-arrow prev"></div>
+                        <div class="unslider-arrow next"></div>
+                    </div>
+
+                    </div>
+
+
+                </div>
+    <!--banner end-->
+    <!--feature start-->
+        <section>
+            <div class="wp">
+                <ul class="feature">
+                    <li class="feature1">
+                        <img class="pic" src="/static/images/feature1.png"/>
+                        <p class="center">专业权威</p>
+                    </li>
+                    <li class="feature2">
+                        <img class="pic" src="/static/images/feature2.png"/>
+                        <p class="center">课程最新</p>
+                    </li>
+                    <li class="feature3">
+                        <img class="pic" src="/static/images/feature3.png"/>
+                        <p class="center">名师授课</p>
+                    </li>
+                    <li class="feature4">
+                        <img class="pic" src="/static/images/feature4.png"/>
+                        <p class="center">数据真实</p>
+                    </li>
+                </ul>
+            </div>
+        </section>
+    <!--feature end-->
+    <!--module1 start-->
+        <section>
+            <div class="module">
+                <div class="wp">
+                    <h1>公开课程</h1>
+                    <div class="module1 eachmod">
+                        <div class="module1_1 left">
+                            <img width="228" height="614" src="/static/images/module1_1.jpg"/>
+                            <p class="fisrt_word">名师授课<br/>专业权威</p>
+                            <a class="more" href="course-list.html">查看更多课程 ></a>
+                        </div>
+                        <div class="right group_list">
+                            <div class="module1_2 box">
+                                <div class="imgslide2">
+                                    <ul class="imgs">
+
+                                        <li>
+                                            <a href="course-detail.html">
+                                                <img width="470" height="300" src="/static/media/courses/2016/12/python文件处理.jpg" />
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a href="course-detail.html">
+                                                <img width="470" height="300" src="/static/media/courses/2016/12/python面向对象.jpg" />
+                                            </a>
+                                        </li>
+
+                                    </ul>
+                                </div>
+                                <div class="unslider-arrow2 prev"></div>
+                                <div class="unslider-arrow2 next"></div>
+                            </div>
+
+                                <div class="module1_3 box">
+                                    <a href="course-detail.html">
+                                        <img width="233" height="190" src="/static/media/courses/2016/11/mysql.jpg"/>
+                                    </a>
+                                    <div class="des">
+                                        <a href="course-detail.html">
+                                            <h2 title="django入门">django入门</h2>
+                                        </a>
+                                        <span class="fl">难度：<i class="key">初级</i></span>
+                                        <span class="fr">学习人数：3</span>
+                                    </div>
+                                    <div class="bottom">
+                                        <span class="fl" title="慕课网">慕课网</span>
+                                        <span class="star fr">0</span>
+                                    </div>
+                                </div>
+
+                                <div class="module1_4 box">
+                                    <a href="course-detail.html">
+                                        <img width="233" height="190" src="/static/media/courses/2016/11/57035ff200014b8a06000338-240-135.jpg"/>
+                                    </a>
+                                    <div class="des">
+                                        <a href="course-detail.html">
+                                            <h2 title="java入门">java入门</h2>
+                                        </a>
+                                        <span class="fl">难度：<i class="key">中级</i></span>
+                                        <span class="fr">学习人数：0</span>
+                                    </div>
+                                    <div class="bottom">
+                                        <span class="fl" title="北京大学">北京大学</span>
+                                        <span class="star fr">0</span>
+                                    </div>
+                                </div>
+
+                                <div class="module1_5 box">
+                                    <a href="course-detail.html">
+                                        <img width="233" height="190" src="/static/media/courses/2016/11/540e57300001d6d906000338-240-135.jpg"/>
+                                    </a>
+                                    <div class="des">
+                                        <a href="course-detail.html">
+                                            <h2 title="python入门">python入门</h2>
+                                        </a>
+                                        <span class="fl">难度：<i class="key">中级</i></span>
+                                        <span class="fr">学习人数：0</span>
+                                    </div>
+                                    <div class="bottom">
+                                        <span class="fl" title="南京大学">南京大学</span>
+                                        <span class="star fr">0</span>
+                                    </div>
+                                </div>
+
+                                <div class="module1_6 box">
+                                    <a href="course-detail.html">
+                                        <img width="233" height="190" src="/static/media/courses/2016/11/57035ff200014b8a06000338-240-135_dHfj8Nq.jpg"/>
+                                    </a>
+                                    <div class="des">
+                                        <a href="course-detail.html">
+                                            <h2 title="java入门2">java入门2</h2>
+                                        </a>
+                                        <span class="fl">难度：<i class="key">高级</i></span>
+                                        <span class="fr">学习人数：0</span>
+                                    </div>
+                                    <div class="bottom">
+                                        <span class="fl" title="慕课网2">慕课网2</span>
+                                        <span class="star fr">0</span>
+                                    </div>
+                                </div>
+
+                                <div class="module1_7 box">
+                                    <a href="course-detail.html">
+                                        <img width="233" height="190" src="/static/media/courses/2016/11/57035ff200014b8a06000338-240-135_0nFiBSI.jpg"/>
+                                    </a>
+                                    <div class="des">
+                                        <a href="course-detail.html">
+                                            <h2 title="java入门3">java入门3</h2>
+                                        </a>
+                                        <span class="fl">难度：<i class="key">初级</i></span>
+                                        <span class="fr">学习人数：1</span>
+                                    </div>
+                                    <div class="bottom">
+                                        <span class="fl" title="慕课网3">慕课网3</span>
+                                        <span class="star fr">0</span>
+                                    </div>
+                                </div>
+
+                                <div class="module1_8 box">
+                                    <a href="course-detail.html">
+                                        <img width="233" height="190" src="/static/media/courses/2016/11/540e57300001d6d906000338-240-135_MSIqfvw.jpg"/>
+                                    </a>
+                                    <div class="des">
+                                        <a href="course-detail.html">
+                                            <h2 title="python入门2">python入门2</h2>
+                                        </a>
+                                        <span class="fl">难度：<i class="key">中级</i></span>
+                                        <span class="fr">学习人数：0</span>
+                                    </div>
+                                    <div class="bottom">
+                                        <span class="fl" title="慕课网666">慕课网666</span>
+                                        <span class="star fr">0</span>
+                                    </div>
+                                </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section>
+            <div class="module greybg">
+                <div class="wp">
+                    <h1>课程机构</h1>
+                    <div class="module3 eachmod">
+                        <div class="module3_1 left">
+                            <img width="228" height="463" src="/static/images/module3_1.jpg"/>
+                            <p class="fisrt_word">名校来袭<br/>权威认证</p>
+                            <a class="more" href="org-list.html">查看更多机构 ></a>
+                        </div>
+                        <div class="right">
+                            <ul>
+
+                                    <li class="">
+                                        <a href="org-detail-homepage.html">
+                                            <div class="company">
+                                                <img width="184" height="100" src="/static/media/org/2016/11/imooc.png"/>
+                                                <div class="score">
+                                                    <div class="circle">
+                                                        <h2>全国知名</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p><span class="key" title="慕课网">慕课网</span></p>
+                                        </a>
+                                    </li>
+
+                                    <li class="">
+                                        <a href="org-detail-homepage.html">
+                                            <div class="company">
+                                                <img width="184" height="100" src="/static/media/org/2016/11/bjdx.jpg"/>
+                                                <div class="score">
+                                                    <div class="circle">
+                                                        <h2>全国知名</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p><span class="key" title="北京大学">北京大学</span></p>
+                                        </a>
+                                    </li>
+
+                                    <li class="">
+                                        <a href="org-detail-homepage.html">
+                                            <div class="company">
+                                                <img width="184" height="100" src="/static/media/org/2016/11/qhdx-logo.png"/>
+                                                <div class="score">
+                                                    <div class="circle">
+                                                        <h2>全国知名</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p><span class="key" title="清华大学">清华大学</span></p>
+                                        </a>
+                                    </li>
+
+                                    <li class="">
+                                        <a href="org-detail-homepage.html">
+                                            <div class="company">
+                                                <img width="184" height="100" src="/static/media/org/2016/11/njdx.jpg"/>
+                                                <div class="score">
+                                                    <div class="circle">
+                                                        <h2>全国知名</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p><span class="key" title="南京大学">南京大学</span></p>
+                                        </a>
+                                    </li>
+
+                                    <li class="five">
+                                        <a href="org-detail-homepage.html">
+                                            <div class="company">
+                                                <img width="184" height="100" src="/static/media/org/2016/11/imooc_klgAUn5.png"/>
+                                                <div class="score">
+                                                    <div class="circle">
+                                                        <h2>全国知名</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p><span class="key" title="慕课网2">慕课网2</span></p>
+                                        </a>
+                                    </li>
+
+                                    <li class="">
+                                        <a href="org-detail-homepage.html">
+                                            <div class="company">
+                                                <img width="184" height="100" src="/static/media/org/2016/11/imooc_Gn1sRjp.png"/>
+                                                <div class="score">
+                                                    <div class="circle">
+                                                        <h2>全国知名</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p><span class="key" title="慕课网3">慕课网3</span></p>
+                                        </a>
+                                    </li>
+
+                                    <li class="">
+                                        <a href="org-detail-homepage.html">
+                                            <div class="company">
+                                                <img width="184" height="100" src="/static/media/org/2016/11/imooc_Y2Tonsq.png"/>
+                                                <div class="score">
+                                                    <div class="circle">
+                                                        <h2>全国知名</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p><span class="key" title="慕课网3">慕课网3</span></p>
+                                        </a>
+                                    </li>
+
+                                    <li class="">
+                                        <a href="org-detail-homepage.html">
+                                            <div class="company">
+                                                <img width="184" height="100" src="/static/media/org/2016/11/imooc_OO2ykYP.png"/>
+                                                <div class="score">
+                                                    <div class="circle">
+                                                        <h2>全国知名</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p><span class="key" title="慕课网4">慕课网4</span></p>
+                                        </a>
+                                    </li>
+
+                                    <li class="">
+                                        <a href="org-detail-homepage.html">
+                                            <div class="company">
+                                                <img width="184" height="100" src="/static/media/org/2016/11/imooc_V0TJOyb.png"/>
+                                                <div class="score">
+                                                    <div class="circle">
+                                                        <h2>全国知名</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p><span class="key" title="慕课网5">慕课网5</span></p>
+                                        </a>
+                                    </li>
+
+                                    <li class="five">
+                                        <a href="org-detail-homepage.html">
+                                            <div class="company">
+                                                <img width="184" height="100" src="/static/media/org/2016/11/imooc_qEaMov1.png"/>
+                                                <div class="score">
+                                                    <div class="circle">
+                                                        <h2>全国知名</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p><span class="key" title="慕课网666">慕课网666</span></p>
+                                        </a>
+                                    </li>
+
+                                    <li class="">
+                                        <a href="org-detail-homepage.html">
+                                            <div class="company">
+                                                <img width="184" height="100" src="/static/media/org/2016/12/bjdx.jpg"/>
+                                                <div class="score">
+                                                    <div class="circle">
+                                                        <h2>全国知名</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p><span class="key" title="慕学网">慕学网</span></p>
+                                        </a>
+                                    </li>
+
+                                    <li class="">
+                                        <a href="org-detail-homepage.html">
+                                            <div class="company">
+                                                <img width="184" height="100" src="/static/media/org/2016/12/imooc_Gn1sRjp.png"/>
+                                                <div class="score">
+                                                    <div class="circle">
+                                                        <h2>全国知名</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p><span class="key" title="python培训机构">python培训机构</span></p>
+                                        </a>
+                                    </li>
+
+                                    <li class="">
+                                        <a href="org-detail-homepage.html">
+                                            <div class="company">
+                                                <img width="184" height="100" src="/static/media/org/2016/12/bjdx_cCpdUw8.jpg"/>
+                                                <div class="score">
+                                                    <div class="circle">
+                                                        <h2>全国知名</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p><span class="key" title="vuejs培训">vuejs培训</span></p>
+                                        </a>
+                                    </li>
+
+                                    <li class="">
+                                        <a href="org-detail-homepage.html">
+                                            <div class="company">
+                                                <img width="184" height="100" src="/static/media/org/2016/12/imooc_klgAUn5.png"/>
+                                                <div class="score">
+                                                    <div class="circle">
+                                                        <h2>全国知名</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p><span class="key" title="nodejs培训">nodejs培训</span></p>
+                                        </a>
+                                    </li>
+
+                                    <li class="five">
+                                        <a href="org-detail-homepage.html">
+                                            <div class="company">
+                                                <img width="184" height="100" src="/static/media/org/2016/12/bjdx_bcd0m07.jpg"/>
+                                                <div class="score">
+                                                    <div class="circle">
+                                                        <h2>全国知名</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p><span class="key" title="慕学在线">慕学在线</span></p>
+                                        </a>
+                                    </li>
+
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    {% endblock %}
+    {% block custom_js %}
+    <script type="text/javascript" src="{% static 'js/index.js' %}"></script>
+    {% endblock %}
+
+
+    (2)配置全局导航和全局"active"状态
+
+    base.html里面设置
+
+    复制代码
+    <div class="wp">
+                            <ul>
+                                <li {% if request.path == '/' %}class="active"{% endif %}><a href="{% url 'index' %}">首页</a></li>
+                                <li {% if request.path|slice:'7' == '/course' %}class="active"{% endif %}>
+                                    <a href="{% url 'course:course_list' %}">
+                                        公开课<img class="hot" src="{% static 'images/nav_hot.png' %}">
+                                    </a>
+                                </li>
+                                <li {% if request.path|slice:'12' == '/org/teacher' %}class="active"{% endif %}>
+                                    <a href="{% url 'org:teacher_list' %}">授课教师</a>
+                                </li >
+                                <li {% if request.path|slice:'9' == '/org/list' %}class="active"{% endif %}>
+                                    <a href="{% url 'org:org_list' %}">授课机构</a></li>
+                            </ul>
+                        </div>
+    复制代码
+    说明：
+
+    request.path  可以获取当前访问页面的相对url
+    比如“http://127.0.0.1:8000/org/teacher_list/”，则request.path  就是“/org/teacher_list/”
+    比如"http://127.0.0.1:8000/org/teacher/detail/1/"，则request.path 就是“/org/teacher/detail/1/”
+    slice:12   是过滤器，取前七位数
+    利用这种发发可以达到全局的“active”效果，而不用每个子页面都要去设置“active”了
+
+
+    10.7.全局搜索功能
+    通过url中加参数keywords来达到全局搜索的功能
+
+    以Course搜索为例：
+
+    复制代码
+     　　　　# 搜索功能
+            search_keywords = request.GET.get('keywords', '')
+            if search_keywords:
+                # icontains是包含的意思（不区分大小写）
+                # Q可以实现多个字段，之间是or的关系
+                all_courses = all_courses.filter(Q(name__icontains=search_keywords) | Q(desc__icontains=search_keywords) | Q(
+                    detail__icontains=search_keywords))
+    复制代码
+
+    复制代码
+    class CourseListView(View):
+        '''课程列表'''
+        def get(self, request):
+            all_courses = Course.objects.all().order_by('-add_time')
+            # 热门课程推荐
+            hot_courses = Course.objects.all().order_by('-click_nums')[:3]
+            # 搜索功能
+            search_keywords = request.GET.get('keywords', '')
+            if search_keywords:
+                # 在name字段进行操作,做like语句的操作。i代表不区分大小写
+                # or操作使用Q
+                all_courses = all_courses.filter(Q(name__icontains=search_keywords) | Q(desc__icontains=search_keywords) | Q(
+                    detail__icontains=search_keywords))
+            # 排序
+            sort = request.GET.get('sort', "")
+            if sort:
+                if sort == "students":
+                    all_courses = all_courses.order_by("-students")
+                elif sort == "hot":
+                    all_courses = all_courses.order_by("-click_nums")
+            # 分页
+            try:
+                page = request.GET.get('page', 1)
+            except PageNotAnInteger:
+                page = 1
+            p = Paginator(all_courses,2 , request=request)
+            courses = p.page(page)
+            return render(request, "course-list.html", {
+                "all_courses":courses,
+                'sort': sort,
+                'hot_courses':hot_courses,
+
+            })
+    复制代码
+    搜索的代码放在deco-common js中：
+
+    复制代码
+    //顶部搜索栏搜索方法
+    function search_click(){
+        var type = $('#jsSelectOption').attr('data-value'),
+            keywords = $('#search_keywords').val(),
+            request_url = '';
+        if(keywords == ""){
+            return
+        }
+        if(type == "course"){
+            request_url = "/course/list?keywords="+keywords
+        }else if(type == "teacher"){
+            request_url = "/org/teacher/list?keywords="+keywords
+        }else if(type == "org"){
+            request_url = "/org/list?keywords="+keywords
+        }
+        window.location.href = request_url
+    }
+    复制代码
+
+
+    课程机构搜索功能
+
+    复制代码
+    # 机构搜索功能
+            search_keywords = request.GET.get('keywords', '')
+            if search_keywords:
+                # 在name字段进行操作,做like语句的操作。i代表不区分大小写
+                # or操作使用Q
+                all_orgs = all_orgs.filter(Q(name__icontains=search_keywords) | Q(desc__icontains=search_keywords))
+
+
+    class OrgView(View):
+    '''课程机构'''
+
+    def get(self, request):
+        # 所有课程机构
+        all_orgs = CourseOrg.objects.all()
+
+        # 所有城市
+        all_citys = CityDict.objects.all()
+
+        # 机构搜索功能
+        search_keywords = request.GET.get('keywords', '')
+        if search_keywords:
+            # 在name字段进行操作,做like语句的操作。i代表不区分大小写
+            # or操作使用Q
+            all_orgs = all_orgs.filter(Q(name__icontains=search_keywords) | Q(desc__icontains=search_keywords))
+        # 城市筛选
+        city_id = request.GET.get('city','')
+        if city_id:
+            all_orgs = all_orgs.filter(city_id=int(city_id))
+
+        # 类别筛选
+        category = request.GET.get('ct','')
+        if category:
+            all_orgs = all_orgs.filter(category=category)
+
+        # 热门课程机构排名
+        hot_orgs = all_orgs.order_by('-click_nums')[:3]
+        # 学习人数和课程数筛选
+        sort = request.GET.get('sort', "")
+        if sort:
+            if sort == "students":
+                all_orgs = all_orgs.order_by("-students")
+            elif sort == "courses":
+                all_orgs = all_orgs.order_by("-course_nums")
+        # 有多少家机构
+        org_nums = all_orgs.count()
+        # 对课程机构进行分页
+        # 尝试获取前台get请求传递过来的page参数
+        # 如果是不合法的配置参数默认返回第一页
+        try:
+            page = request.GET.get('page', 1)
+        except PageNotAnInteger:
+            page = 1
+        # 这里指从allorg中取五个出来，每页显示5个
+        p = Paginator(all_orgs, 2, request=request)
+        orgs = p.page(page)
+
+        return render(request, "org-list.html", {
+            "all_orgs": orgs,
+            "all_citys": all_citys,
+            "org_nums": org_nums,
+            'city_id':city_id,
+            "category": category,
+            'hot_orgs':hot_orgs,
+            'sort':sort,
+        })
+
+
+    授课老师搜索功能
+
+    复制代码
+    # 搜索功能
+            search_keywords = request.GET.get('keywords', '')
+            if search_keywords:
+                # 在name字段进行操作,做like语句的操作。i代表不区分大小写
+                # or操作使用Q
+                all_teachers = all_teachers.filter(name__icontains=search_keywords)
+    复制代码
+
+    复制代码
+    # 讲师列表
+    class TeacherListView(View):
+        def get(self, request):
+            all_teachers = Teacher.objects.all()
+            # 总共有多少老师使用count进行统计
+            teacher_nums = all_teachers.count()
+
+            # 搜索功能
+            search_keywords = request.GET.get('keywords', '')
+            if search_keywords:
+                # 在name字段进行操作,做like语句的操作。i代表不区分大小写
+                # or操作使用Q
+                all_teachers = all_teachers.filter(name__icontains=search_keywords)
+            # 人气排序
+            sort = request.GET.get('sort','')
+            if sort:
+                if sort == 'hot':
+                    all_teachers = all_teachers.order_by('-click_nums')
+
+            #讲师排行榜
+            sorted_teacher = Teacher.objects.all().order_by('-click_nums')[:3]
+            # 进行分页
+            try:
+                page = request.GET.get('page', 1)
+            except PageNotAnInteger:
+                page = 1
+            p = Paginator(all_teachers, 1, request=request)
+            teachers = p.page(page)
+            return render(request, "teachers-list.html", {
+                "all_teachers": teachers,
+                "teacher_nums": teacher_nums,
+                'sorted_teacher':sorted_teacher,
+                'sort':sort,
+            })
+    复制代码
 

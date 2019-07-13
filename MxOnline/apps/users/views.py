@@ -1,15 +1,45 @@
 
 # Create your views here.
 
-from django.shortcuts import render
-from django.contrib.auth import authenticate, login
+import json
+from django.shortcuts import render,HttpResponse,HttpResponseRedirect,reverse
+from django.contrib.auth import authenticate,login,logout
 from django.contrib.auth.backends import ModelBackend
-from  . models import UserProfile,EmailVerifyRecord
+from  . models import UserProfile,EmailVerifyRecord,Banner
 from django.db.models import Q
 from django.views.generic.base import View
-from . form import LoginForm,RegisterForm,ForgetPwdForm,ModifyPwdForm
+from . form import LoginForm,RegisterForm,ForgetPwdForm,ModifyPwdForm,UploadImageForm,UserInfoForm
 from django.contrib.auth.hashers import make_password
 from utils.email_send import send_register_eamil
+from utils.mixin_utils import LoginRequiredMixin
+from operation.models import UserCourse,UserFavorite,UserMessage
+from organization.models import CourseOrg,Teacher
+from course.models import Course
+from pure_pagination import Paginator, EmptyPage, PageNotAnInteger
+
+
+class IndexView(View):
+    """首页"""
+
+    def get(self,request):
+        # 轮播图
+        all_banners = Banner.objects.all().order_by('index')
+        # 课程
+        courses = Course.objects.filter(is_banner=False)[:6]
+        # 轮播课程
+        banner_courses = Course.objects.filter(is_banner=True)[:3]
+        # 课程机构
+        course_orgs = Course.objects.all()[:15]
+        return render(request,'index.html',{
+            'all_banners':all_banners,
+            'courses':courses,
+            'banner_courses':banner_courses,
+            'course_orgs':course_orgs,
+        })
+
+
+
+
 
 #邮箱和用户名都可以登录
 # 基础ModelBackend类，因为它有authenticate方法
@@ -28,10 +58,12 @@ class CustomBackend(ModelBackend):
 
 
 class LoginView(View):
-    def get(self, request):
+    '''用户登录'''
+
+    def get(self,request):
         return render(request, 'login.html')
 
-    def post(self, request):
+    def post(self,request):
         # 实例化
         login_form = LoginForm(request.POST)
         if login_form.is_valid():
@@ -43,18 +75,18 @@ class LoginView(View):
             # 如果不是null说明验证成功
             if user is not None:
                 if user.is_active:
-                    # 只用注册激活才能登录
+                    # 只有注册激活才能登录
                     login(request, user)
-                    return render(request, 'index.html')
+                    return HttpResponseRedirect(reverse('index'))
                 else:
-                    return render(request,'login.html', {'msg': '用户名或密码错误', 'login_form': login_form})
+                    return render(request, 'login.html', {'msg': '用户名或密码错误', 'login_form': login_form})
             # 只有当用户名或密码不存在时，才返回错误信息到前端
             else:
-                return render(request, 'login.html', {'msg': '用户名或密码错误', 'login_form': login_form})
+                return render(request, 'login.html', {'msg': '用户名或密码错误','login_form':login_form})
 
         # form.is_valid（）已经判断不合法了，所以这里不需要再返回错误信息到前端了
         else:
-            return render(request, 'login.html', {'login_form': login_form})
+            return render(request,'login.html',{'login_form':login_form})
 
 # 激活用户
 class ActiveUserView(View):
@@ -151,13 +183,169 @@ class ModifyPwdView(View):
             return render(request, "password_reset.html", {"email":email, "modify_form":modify_form })
 
 
+class UserinfoView(LoginRequiredMixin,View):
+    """用户个人信息"""
+
+    def get(self,request):
+        return render(request,'usercenter-info.html')
+
+    def post(self,request):
+        user_info_form = UserInfoForm(request.POST,instance=request.user)
+        if user_info_form.is_valid():
+            user_info_form.save()
+            return HttpResponse('{"status":"success"}',content_type='application/json')
+        else:
+            return HttpResponse(json.dumps(user_info_form.errors),content_type='application/json')
 
 
+class UploadImageView(LoginRequiredMixin,View):
+    """用户图片修改"""
+
+    def post(self,request):
+        # 上传的文件都在request.FILES里面获取，所以这里要多传一个这样参数
+        image_form = UploadImageForm(request.POST,request.FILES)
+        if image_form.is_valid():
+            image = image_form.cleaned_data['image']
+            request.user.image = image
+            request.user.save()
+            return HttpResponse('{"status":"success"}',content_type='application/json')
+
+        else:
+            return HttpResponse('{"status":"fail"}',content_type='application/json')
 
 
+class UpdatePwdView(View):
+    """
+    个人中心修改用户密码
+    """
+
+    def post(self,request):
+        modify_form = ModifyPwdForm(request.POST)
+        if modify_form.is_valid():
+            pwd1 = request.POST.get("password1","")
+            pwd2 = request.POST.get("password2","")
+            if pwd1 != pwd2:
+                return HttpResponse('{"status":"fail","msg":"密码不一致"}',content_type='application/json')
+            user = request.user
+            user.password = make_password(pwd2)
+            user.save()
+
+            return HttpResponse('{"status":"success"}',content_type='application/json')
+
+        else:
+
+            return HttpResponse(json.dumps(modify_form.errors),content_type='application/json')
 
 
+class LogoutView(View):
 
+    """用户登出"""
+    def get(self,request):
+        logout(request)
+        from django.urls import reverse
+        return HttpResponseRedirect(reverse('index'))
+
+
+class SendEmailCodeView(LoginRequiredMixin,View):
+    """发送邮箱修改验证码"""
+
+    def get(self,request):
+        email = request.GET.get('email','')
+
+        if UserProfile.objects.filter(email=email):
+            return HttpResponse('{"email":"邮箱已存在"}',content_type='application/json')
+
+        send_register_eamil(email,'update_email')
+        return HttpResponse('{"status":"success"}',content_type='application/json')
+
+
+class MyCourseView(LoginRequiredMixin,View):
+    """我的课程"""
+
+    def get(self,request):
+        user_course = UserCourse.objects.filter(user=request.user)
+        print(user_course)
+        return render(request,"usercenter-mycourse.html",{
+            "user_courses":user_course,
+        })
+        # return render(request,"ds.html")
+
+class MyFavOrgView(LoginRequiredMixin,View):
+    """我收藏的课程机构"""
+
+    def get(self, request):
+        org_list = []
+        fav_orgs = UserFavorite.objects.filter(user=request.user, fav_type=2)
+        # 上面的fav_orgs只是存放了id。我们还需要通过id找到机构对象
+        for fav_org in fav_orgs:
+            # 取出fav_id也就是机构的id。
+            org_id = fav_org.fav_id
+            # 获取这个机构对象
+            org = CourseOrg.objects.get(id=org_id)
+            org_list.append(org)
+        return render(request, "usercenter-fav-org.html", {
+            "org_list": org_list,
+        })
+
+
+class MyFavTeacherView(LoginRequiredMixin,View):
+    """我收藏的授课讲师"""
+
+    def get(self,request):
+        teacher_list=[]
+        fav_teachers = UserFavorite.objects.filter(user=request.user,fav_type=3)
+        for fav_teacher in fav_teachers:
+            teacher_id = fav_teacher.fav_id
+            teacher = Teacher.objects.get(id=teacher_id)
+            teacher_list.append(teacher)
+
+        return render(request,"usercenter-fav-teacher.html",{
+            "teacher_list":teacher_list,
+        })
+
+class MyFavCourseView(LoginRequiredMixin,View):
+    """我收藏的课程"""
+
+    def get(self,request):
+        course_list = []
+        fav_courses = UserFavorite.objects.filter(user=request.user,fav_type=1)
+        for fav_course in fav_courses:
+            course_id = fav_course.fav_id
+            course = Course.objects.get(id=course_id)
+            course_list.append(course)
+
+        return render(request,"usercenter-fav-course.html",{
+            "course_list":course_list,
+        })
+
+
+class MyMessageView(LoginRequiredMixin,View):
+    """我的消息"""
+
+    def get(self,request):
+        all_message = UserMessage.objects.filter(user=request.user.id)
+
+        try:
+            page = request.GET.get('page',1)
+
+        except PageNotAnInteger:
+            page = 1
+
+        p = Paginator(all_message,4,request=request)
+        messages = p.page(page)
+
+        # for a in messages.object_list:
+        #     print("$$$$",a.add_time)
+        #
+        # print("&&&&",messages)
+        #
+        # for i in all_message:
+        #     print("###",i.message)
+
+
+        return render(request,"usercenter-message.html",{
+            "message":messages,
+        })
 
 
 

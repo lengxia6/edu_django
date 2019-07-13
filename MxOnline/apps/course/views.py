@@ -101,11 +101,10 @@ class CourseInfoView(LoginRequiredMixin,View):
     def get(self, request, course_id):
 
         course = Course.objects.get(id=int(course_id))
-        # for yy in course.get_learn_users:
-        #     print("???",yy.id)
+        course.students +=1
+        course.save()
 
         # 查询用户是否已经学习了该课程
-
         user_courses = UserCourse.objects.filter(user=request.user,course=course)
         if not user_courses:
             # 如果没有学习该门课程就关联起来

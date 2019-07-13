@@ -1,20 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="578e63f9-7ec4-4be5-b53f-55429a5fe5ba" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/MxOnline/media/teacher/2018/03/乔丹.jpg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MxOnline/apps/course/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/MxOnline/apps/course/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MxOnline/apps/organization/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/MxOnline/apps/organization/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MxOnline/apps/organization/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/MxOnline/apps/organization/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MxOnline/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/MxOnline/templates/base.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MxOnline/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/MxOnline/templates/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MxOnline/templates/teacher-detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/MxOnline/templates/teacher-detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MxOnline/templates/teacher-list.html" beforeDir="false" afterPath="$PROJECT_DIR$/MxOnline/templates/teacher-list.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/笔记之教育平台(七)" beforeDir="false" afterPath="$PROJECT_DIR$/笔记之教育平台(七)" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/遗漏问题" beforeDir="false" afterPath="$PROJECT_DIR$/遗漏问题" afterDir="false" />
-    </list>
+    <list default="true" id="578e63f9-7ec4-4be5-b53f-55429a5fe5ba" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -97,11 +84,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="笔记之教育平台(七)" pinned="false" current-in-tab="true">
+      <file leaf-file-name="笔记之教育平台(七)" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/笔记之教育平台(七)">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="234">
-              <caret line="15" column="92" selection-start-line="15" selection-end-line="15" selection-end-column="92" />
+              <caret line="15" column="17" lean-forward="true" selection-start-line="15" selection-end-line="15" selection-end-column="89" />
             </state>
           </provider>
         </entry>
@@ -118,11 +105,14 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="urls.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="urls.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/MxOnline/MxOnline/urls.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="100">
-              <caret line="32" column="62" lean-forward="true" selection-start-line="32" selection-start-column="62" selection-end-line="32" selection-end-column="62" />
+            <state relative-caret-position="318">
+              <caret line="32" column="5" selection-start-line="32" selection-start-column="5" selection-end-line="32" selection-end-column="62" />
+              <folding>
+                <element signature="e#632#664#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -187,9 +177,9 @@
       <find>pagelist</find>
       <find>right</find>
       <find>des</find>
-      <find />
+      <find>.butler_list_box .right</find>
       <find>../</find>
-      <find />
+      <find>right butler</find>
       <find>首页</find>
     </findStrings>
     <replaceStrings>
@@ -257,21 +247,104 @@
   <component name="NodePackageJsonFileManager">
     <packageJsonPaths />
   </component>
-  <component name="ProjectFrameBounds" extendedState="1">
-    <option name="x" value="-93" />
-    <option name="y" value="145" />
-    <option name="width" value="1943" />
-    <option name="height" value="823" />
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="317" />
+    <option name="y" value="277" />
+    <option name="width" value="1554" />
+    <option name="height" value="658" />
   </component>
   <component name="ProjectLevelVcsManager">
     <ConfirmationsSetting value="2" id="Add" />
   </component>
   <component name="ProjectView">
-    <navigator proportions="" version="1">
+    <navigator currentView="Scope" currentSubView="Project Files" proportions="" version="1">
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
+      <pane id="Scope">
+        <subPane subId="Project Files">
+          <expand>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="edu_django" type="cbb8eebc:String" user="edu_django" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="edu_django" type="cbb8eebc:String" user="edu_django" />
+              <item name="MxOnline" type="cbb8eebc:String" user="MxOnline" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="edu_django" type="cbb8eebc:String" user="edu_django" />
+              <item name="MxOnline" type="cbb8eebc:String" user="MxOnline" />
+              <item name="apps" type="cbb8eebc:String" user="apps" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="edu_django" type="cbb8eebc:String" user="edu_django" />
+              <item name="MxOnline" type="cbb8eebc:String" user="MxOnline" />
+              <item name="apps" type="cbb8eebc:String" user="apps" />
+              <item name="course" type="cbb8eebc:String" user="course" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="edu_django" type="cbb8eebc:String" user="edu_django" />
+              <item name="MxOnline" type="cbb8eebc:String" user="MxOnline" />
+              <item name="MxOnline" type="cbb8eebc:String" user="MxOnline" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="External Dependencies" type="cbb8eebc:String" user="External Dependencies" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="External Dependencies" type="cbb8eebc:String" user="External Dependencies" />
+              <item name="C:" type="cbb8eebc:String" user="C:" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="External Dependencies" type="cbb8eebc:String" user="External Dependencies" />
+              <item name="C:" type="cbb8eebc:String" user="C:" />
+              <item name="Users" type="cbb8eebc:String" user="Users" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="External Dependencies" type="cbb8eebc:String" user="External Dependencies" />
+              <item name="C:" type="cbb8eebc:String" user="C:" />
+              <item name="Users" type="cbb8eebc:String" user="Users" />
+              <item name="lengxia" type="cbb8eebc:String" user="lengxia" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="External Dependencies" type="cbb8eebc:String" user="External Dependencies" />
+              <item name="C:" type="cbb8eebc:String" user="C:" />
+              <item name="Users" type="cbb8eebc:String" user="Users" />
+              <item name="lengxia" type="cbb8eebc:String" user="lengxia" />
+              <item name="Desktop" type="cbb8eebc:String" user="Desktop" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="External Dependencies" type="cbb8eebc:String" user="External Dependencies" />
+              <item name="C:" type="cbb8eebc:String" user="C:" />
+              <item name="Users" type="cbb8eebc:String" user="Users" />
+              <item name="lengxia" type="cbb8eebc:String" user="lengxia" />
+              <item name="Desktop" type="cbb8eebc:String" user="Desktop" />
+              <item name="basketball" type="cbb8eebc:String" user="basketball" />
+            </path>
+            <path>
+              <item name="Root" type="cbb8eebc:String" user="Root" />
+              <item name="External Dependencies" type="cbb8eebc:String" user="External Dependencies" />
+              <item name="C:" type="cbb8eebc:String" user="C:" />
+              <item name="Users" type="cbb8eebc:String" user="Users" />
+              <item name="lengxia" type="cbb8eebc:String" user="lengxia" />
+              <item name="Desktop" type="cbb8eebc:String" user="Desktop" />
+              <item name="basketball" type="cbb8eebc:String" user="basketball" />
+              <item name="NBA" type="cbb8eebc:String" user="NBA" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -335,20 +408,25 @@
               <item name="edu_django" type="b2602c69:ProjectViewProjectNode" />
               <item name="edu_django" type="462c0819:PsiDirectoryNode" />
               <item name="MxOnline" type="462c0819:PsiDirectoryNode" />
-              <item name="MxOnline" type="462c0819:PsiDirectoryNode" />
+              <item name="extra_apps" type="462c0819:PsiDirectoryNode" />
+              <item name="xadmin" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="edu_django" type="b2602c69:ProjectViewProjectNode" />
               <item name="edu_django" type="462c0819:PsiDirectoryNode" />
               <item name="MxOnline" type="462c0819:PsiDirectoryNode" />
+              <item name="extra_apps" type="462c0819:PsiDirectoryNode" />
+              <item name="xadmin" type="462c0819:PsiDirectoryNode" />
               <item name="static" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="edu_django" type="b2602c69:ProjectViewProjectNode" />
               <item name="edu_django" type="462c0819:PsiDirectoryNode" />
               <item name="MxOnline" type="462c0819:PsiDirectoryNode" />
+              <item name="extra_apps" type="462c0819:PsiDirectoryNode" />
+              <item name="xadmin" type="462c0819:PsiDirectoryNode" />
               <item name="static" type="462c0819:PsiDirectoryNode" />
-              <item name="js" type="462c0819:PsiDirectoryNode" />
+              <item name="xadmin" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="edu_django" type="b2602c69:ProjectViewProjectNode" />
@@ -365,7 +443,7 @@
   <component name="PropertiesComponent">
     <property name="DefaultHtmlFileTemplate" value="HTML File" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../basketball" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
@@ -429,7 +507,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-74" y="116" width="1554" height="658" extended-state="0" />
+    <frame x="-7" y="-7" width="1550" height="838" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info anchor="bottom" id="TODO" order="6" />
@@ -438,8 +516,8 @@
       <window_info anchor="bottom" id="Version Control" order="7" />
       <window_info anchor="bottom" id="Python Console" order="11" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.32899022" />
-      <window_info anchor="bottom" id="Terminal" order="8" visible="true" weight="0.38579655" />
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.15975936" />
+      <window_info anchor="bottom" id="Terminal" order="8" visible="true" weight="0.28673324" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.16018766" />
       <window_info anchor="bottom" id="Docker" order="10" show_stripe_button="false" />
       <window_info anchor="right" id="Database" order="4" />
       <window_info anchor="right" id="SciView" order="3" />
@@ -731,13 +809,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/MxOnline/MxOnline/urls.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="100">
-          <caret line="32" column="62" lean-forward="true" selection-start-line="32" selection-start-column="62" selection-end-line="32" selection-end-column="62" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/MxOnline/templates/base.html">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-600">
@@ -807,7 +878,17 @@
     <entry file="file://$PROJECT_DIR$/笔记之教育平台(七)">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="234">
-          <caret line="15" column="92" selection-start-line="15" selection-end-line="15" selection-end-column="92" />
+          <caret line="15" column="17" lean-forward="true" selection-start-line="15" selection-end-line="15" selection-end-column="89" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/MxOnline/MxOnline/urls.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="318">
+          <caret line="32" column="5" selection-start-line="32" selection-start-column="5" selection-end-line="32" selection-end-column="62" />
+          <folding>
+            <element signature="e#632#664#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
