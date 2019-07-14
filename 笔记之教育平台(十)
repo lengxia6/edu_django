@@ -1,0 +1,366 @@
+# Django+xadmin打造在线教育平台（十）
+
+十四、xadmin的进阶开发
+
+    因为setting 中DEBUG = True，不能使用404、500页面
+    14.1、权限管理
+    14.2、自定义icon
+    14.3、默认排序、只读字段和不显示字段
+    14.4、inlines添加数据
+    14.5、一张表分成两个Model来管理
+    14.6、xadmin的其他常见功能
+    14.7、增加富文本编辑器 Ueditor
+    注释：C:\Users\lengxia\PycharmProjects\newstart\venv\lib\site-packages\django\forms\boundfield.py 中第93行 renderer=self.form.renderer,
+
+    index首页轮播图不能使用
+
+
+十四、xadmin的进阶开发
+
+    14.1.权限管理
+    （1）用户权限
+
+    超级用户拥有所有权限，其它添加的用户默认没有任何权限
+
+    进后台添加一个用户“Editor1”,勾上“职员状态”后，这个用户才可以登录进后台，默认没添加权限的用户登录到后台的情况如下：
+
+    接下来，为用户Editor1添加查看课程和查看章节的权限
+
+    再刷新可以看到，有了查看课程和章节的权限了
+
+     （2）组的权限
+
+     添加一个组“编辑部门”，赋予如下权限 ：
+
+     把刚才的用户“Editor1”加入到“编辑部门”这个组，然后看用户现在的权限如下：
+
+    组里面的成员不但拥有自己本身的权限外，还会拥有组的权限
+
+
+    14.2.自定义icon
+     xadmin的图标采用的是第三方css样式“font awesome”,我们可以进官网下载最新的样式替代原本的，下载地址：http://www.fontawesome.com.cn/
+
+    下载完后把里面的“css”和“fonts”两个文件夹拷贝到xadmin的源码（路径：xadmin/static/vendor/font-awesome）里面
+
+    使用方法：
+
+    以course为例
+
+    （1）进官网找到图标的样式
+
+
+    （2）course/adminx.py使用
+
+    复制代码
+    # Course的admin管理器
+    class CourseAdmin(object):
+        '''课程'''
+
+        list_display = [ 'name','desc','detail','degree','learn_times','students']
+        search_fields = ['name', 'desc', 'detail', 'degree', 'students']
+        list_filter = [ 'name','desc','detail','degree','learn_times','students']
+        model_icon = 'fa fa-book'
+    复制代码
+    再在后台刷新（ctrl+F5），就可以看到图标了
+
+
+    14.3.默认排序、只读字段和不显示的字段
+    课程：
+
+    按点击数倒序排序
+    点击数不能编辑
+    不显示收藏人数
+
+
+    # Course的admin管理器
+    class CourseAdmin(object):
+        '''课程'''
+
+        list_display = [ 'name','desc','detail','degree','learn_times','students']   #显示的字段
+        search_fields = ['name', 'desc', 'detail', 'degree', 'students']             #搜索
+        list_filter = [ 'name','desc','detail','degree','learn_times','students']    #过滤
+        model_icon = 'fa fa-book'            #图标
+        ordering = ['-click_nums']           #排序
+        readonly_fields = ['click_nums']     #只读字段，不能编辑
+        exclude = ['fav_nums']               #不显示的字段
+
+    14.4.inlines添加数据
+     目前在添加课程的时候没法添加章节和课程资源，我们可以用inlines去实现这一功能
+
+    复制代码
+    class LessonInline(object):
+        model = Lesson
+        extra = 0
+
+
+    class CourseResourceInline(object):
+        model = CourseResource
+        extra = 0
+
+
+    #在CourseAdmin中使用inlines添加上面两个的方法
+    class CourseAdmin(object):
+        inlines = [LessonInline,CourseResourceInline]    #增加章节和课程资源
+
+    效果如下：
+
+    再添加课程的时候，可以直接添加章节和课程资源
+
+
+    14.5.一张表分两个Model来管理
+    课程里面分为轮播课程和不是轮播课程两种类型，我们可以分开来管理
+
+    （1）在course/models.py里面新建一个Model
+
+    复制代码
+    class BannerCourse(Course):
+        '''显示轮播课程'''
+        class Meta:
+            verbose_name = '轮播课程'
+            verbose_name_plural = verbose_name
+            #这里必须设置proxy=True，这样就不会再生成一张表，同时还具有Model的功能
+            proxy = True
+    复制代码
+    （2）course/adminx.py
+
+    复制代码
+    from .models import BannerCourse
+
+    class CourseAdmin(object):
+        '''课程'''
+
+        list_display = [ 'name','desc','detail','degree','learn_times','students']   #显示的字段
+        search_fields = ['name', 'desc', 'detail', 'degree', 'students']             #搜索
+        list_filter = [ 'name','desc','detail','degree','learn_times','students']    #过滤
+        model_icon = 'fa fa-book'            #图标
+        ordering = ['-click_nums']           #排序
+        readonly_fields = ['click_nums']     #只读字段
+        exclude = ['fav_nums']               #不显示的字段
+        inlines = [LessonInline,CourseResourceInline]    #增加章节和课程资源
+
+        def queryset(self):
+            # 重载queryset方法，来过滤出我们想要的数据的
+            qs = super(CourseAdmin, self).queryset()
+            # 只显示is_banner=True的课程
+            qs = qs.filter(is_banner=False)
+            return qs
+
+
+    class BannerCourseAdmin(object):
+        '''轮播课程'''
+
+        list_display = [ 'name','desc','detail','degree','learn_times','students']
+        search_fields = ['name', 'desc', 'detail', 'degree', 'students']
+        list_filter = [ 'name','desc','detail','degree','learn_times','students']
+        model_icon = 'fa fa-book'
+        ordering = ['-click_nums']
+        readonly_fields = ['click_nums']
+        exclude = ['fav_nums']
+        inlines = [LessonInline,CourseResourceInline]
+
+        def queryset(self):
+            #重载queryset方法，来过滤出我们想要的数据的
+            qs = super(BannerCourseAdmin, self).queryset()
+            #只显示is_banner=True的课程
+            qs = qs.filter(is_banner=True)
+            return qs
+
+    # 将管理器与model进行注册关联
+    xadmin.site.register(Course, CourseAdmin)
+    xadmin.site.register(BannerCourse, BannerCourseAdmin)
+
+    后台：可以看到多了一个轮播课程，来达到分类管理的一个功能
+
+    14.6.xadmin的其它常见功能
+    （1）list_editable
+
+    在列表页可以直接编辑的
+
+    class CourseAdmin(object):
+        list_editable = ['degree','desc']
+
+    （2）自定义函数作为列显示
+
+    course/models.py中
+
+    复制代码
+    class Course(models.Model):
+        '
+        '
+        '
+        def get_zj_nums(self):
+            #获取课程的章节数
+            return self.lesson_set.all().count()
+        get_zj_nums.short_description = '章节数'   #在后台显示的名称
+    复制代码
+    course/adminx.py中
+
+    class CourseAdmin(object):
+        list_display = ['get_zj_nums']  #直接使用函数名作为字段显示
+
+    效果：列表字段多了个“章节数”
+
+    （3）显示自定义的html代码
+
+    course/models.py中
+
+    复制代码
+    class Course(models.Model):
+        .
+        .
+        .
+        def go_to(self):
+            from django.utils.safestring import mark_safe
+            #mark_safe后就不会转义
+            return mark_safe("<a href='https://home.cnblogs.com/u/derek1184405959/'>跳转</a>")
+        go_to.short_description = "跳转"
+    复制代码
+    course/adminx.py中
+
+    class CourseAdmin(object):
+        list_display = ['go_to']
+    效果：多了一个列表“跳转”，点击后跳转到上面定义的地址
+
+    （4）refresh定时刷新工具
+
+     course/adminx.py中
+
+    class CourseAdmin(object):
+        refresh_times = [3,5]           #自动刷新（里面是秒数）
+    后台效果：
+
+    可以选择3s或者5s自动刷新页面
+
+
+    （5）字段联动
+
+     应用场景：当添加一门课程的时候，希望课程机构里面的课程数 +1
+
+     重写xadmin的save_models方法
+
+    复制代码
+    class CourseAdmin(object):
+        .
+        .
+        .
+        def save_models(self):
+            # 在保存课程的时候统计课程机构的课程数
+            # obj实际是一个course对象
+            obj = self.new_obj
+            # 如果这里不保存，新增课程，统计的课程数会少一个
+            obj.save()
+            # 确定课程的课程机构存在。
+            if obj.course_org is not None:
+                #找到添加的课程的课程机构
+                course_org = obj.course_org
+                #课程机构的课程数量等于添加课程后的数量
+                course_org.course_nums = Course.objects.filter(course_org=course_org).count()
+                course_org.save()
+
+    14.7.增加富文本编辑器Ueditor
+    （1）下载
+
+    地址：https://github.com/twz915/DjangoUeditor3/
+
+    解压后，把DjangoUeditor文件夹拷贝到项目目录下面
+
+    注意：直接pip install DjangoUeditor的方法会出问题
+
+    （2）settings中添加app
+
+    INSTALLED_APPS = [
+        'DjangoUeditor',
+    ]
+    （3）MxOnline/urls.py
+
+     　　# 富文本编辑器url
+        path('ueditor/',include('DjangoUeditor.urls' )),
+     （4）course/models.py中Course修改detail字段
+
+    class Course(models.Model):
+        # detail = models.TextField("课程详情")
+        detail = UEditorField(verbose_name=u'课程详情', width=600, height=300, imagePath="courses/ueditor/",
+                              filePath="courses/ueditor/", default='')
+
+
+    （5）xadmin/plugs目录下新建ueditor.py文件，代码如下
+
+    复制代码
+    import xadmin
+    from xadmin.views import BaseAdminPlugin, CreateAdminView, ModelFormAdminView, UpdateAdminView
+    from DjangoUeditor.models import UEditorField
+    from DjangoUeditor.widgets import UEditorWidget
+    from django.conf import settings
+
+
+    class XadminUEditorWidget(UEditorWidget):
+        def __init__(self, **kwargs):
+            self.ueditor_options = kwargs
+            self.Media.js = None
+            super(XadminUEditorWidget,self).__init__(kwargs)
+
+
+    class UeditorPlugin(BaseAdminPlugin):
+
+        def get_field_style(self, attrs, db_field, style, **kwargs):
+            if style == 'ueditor':
+                if isinstance(db_field, UEditorField):
+                    widget = db_field.formfield().widget
+                    param = {}
+                    param.update(widget.ueditor_settings)
+                    param.update(widget.attrs)
+                    return {'widget':XadminUEditorWidget(**param)}
+            return attrs
+
+        def block_extrahead(self, context, nodes):
+            js  = '<script type="text/javascript" src="%s"></script>' %(settings.STATIC_URL + "ueditor/ueditor.config.js")
+            js += '<script type="text/javascript" src="%s"></script>' %(settings.STATIC_URL + "ueditor/ueditor.all.min.js")
+            nodes.append(js)
+
+    xadmin.site.register_plugin(UeditorPlugin, UpdateAdminView)
+    xadmin.site.register_plugin(UeditorPlugin, CreateAdminView)
+    复制代码
+    （6）xadmin/plugs/__init__.py里面添加ueditor插件
+
+    PLUGINS = (
+       'ueditor',
+    )
+    （7）course/adminx.py中使用
+
+    class CourseAdmin(object):
+        #detail就是要显示为富文本的字段名
+        style_fields = {"detail": "ueditor"}
+    （8）course-detail.html
+
+    在模板中必须关闭Django的自动转义才能正常显示
+
+    <div class="tab_cont tab_cont1">
+         {% autoescape off %}
+         {{ course.detail }}
+         {% endautoescape %}
+         </div>
+    最终效果：
+
+    后台编辑页面
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

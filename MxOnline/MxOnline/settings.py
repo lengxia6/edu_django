@@ -25,9 +25,8 @@ sys.path.insert(0,os.path.join(BASE_DIR, 'extra_apps'))
 SECRET_KEY = 'fkxa@9^epud_@j&tv&+5x74z^e*+)$qht$d8xz^l5f&at#iu4!'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
+DEBUG = True           # 500、404自定义页面需要更改 DEBUG = False
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -47,6 +46,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'captcha',
     'pure_pagination',
+    'DjangoUeditor',
 
 ]
 PAGINATION_SETTINGS = {

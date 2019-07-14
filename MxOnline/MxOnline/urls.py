@@ -21,7 +21,7 @@ from django.views.generic import RedirectView,TemplateView
 from users.views import LoginView,RegisterView,ActiveUserView,ForgetPwdView,ResetView,ModifyPwdView,LogoutView,IndexView
 from organization.views import OrgView
 from django.views.static import serve
-from MxOnline.settings import MEDIA_ROOT
+from MxOnline.settings import MEDIA_ROOT,STATICFILES_DIRS
 
 
 urlpatterns = [
@@ -47,11 +47,19 @@ urlpatterns = [
     # 个人信息
     path("users/",include('users.urls',namespace="users")),
 
+    # 静态文件
+    re_path(r'^static/(?P<path>.*)', serve, {"document_root": STATICFILES_DIRS }),
 
+    # 富文本编辑器url
+    path('ueditor/',include('DjangoUeditor.urls')),
 
 
 
 ]
 
 
-#
+
+# 全局404页面配置
+handler404 = 'users.views.pag_not_found'
+# 全局500页面配置
+handler500 = 'users.views.page_error'
