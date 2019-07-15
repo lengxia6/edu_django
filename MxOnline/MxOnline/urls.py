@@ -58,7 +58,6 @@ urlpatterns = [
 ]
 
 
-
 # 全局404页面配置
 handler404 = 'users.views.pag_not_found'
 # 全局500页面配置
